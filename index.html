@@ -204,17 +204,24 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
   attribution:"© OpenStreetMap contributors"
 }).addTo(map);
 
-countries.forEach(([name,url,code,lat,lon])=>{
+// Convert 2-letter country code to regional indicator symbols (emoji flag)
+function countryCodeToEmojiFlag(code) {
+  return code.toUpperCase().replace(/./g, char =>
+    String.fromCodePoint(0x1F1E6 - 65 + char.charCodeAt(0))
+  );
+}
+
+countries.forEach(([name, url, code, lat, lon]) => {
   const emojiFlag = countryCodeToEmojiFlag(code);
   const icon = L.divIcon({
     className: 'flag-icon',
-    html: emojiFlag,
-    iconSize: ,
-    iconAnchor: 
+    html: `<span>${emojiFlag}</span>`
+    // Let Leaflet automatically handle size and anchor for better compatibility
   });
-  const marker = L.marker([lat,lon],{icon: icon}).addTo(map);
-  if(url) marker.on('click',()=>{window.open(url,'_blank')});
+  const marker = L.marker([lat, lon], {icon: icon}).addTo(map);
+  if(url) marker.on('click', () => { window.open(url, '_blank'); });
 });
+
 </script>
 <div id="region-links" style="text-align:center; margin: 8px 0; font-family: Arial, sans-serif;">
   <span style="font-weight:bold; margin-right: 10px;">Regional Risk Maps:</span>
