@@ -16,12 +16,24 @@ body{margin:0;background:#eaf2f8;font-family:Arial,sans-serif;}
 <div id="leafletmap"></div>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-// Function to convert country code (e.g. 'us') to regional indicator symbols (emoji flag)
+  
+// Convert 2-letter country code to regional indicator symbols (emoji flag)
 function countryCodeToEmojiFlag(code) {
   return code.toUpperCase().replace(/./g, char =>
     String.fromCodePoint(0x1F1E6 - 65 + char.charCodeAt(0))
   );
 }
+
+countries.forEach(([name, url, code, lat, lon]) => {
+  const emojiFlag = countryCodeToEmojiFlag(code);
+  const icon = L.divIcon({
+    className: 'flag-icon',
+    html: `<span>${emojiFlag}</span>`
+    // Let Leaflet automatically handle size and anchor for better compatibility
+  });
+  const marker = L.marker([lat, lon], {icon: icon}).addTo(map);
+  if(url) marker.on('click', () => { window.open(url, '_blank'); });
+});
 
 const countries=[
   // [Country, AdvisoryURL, CountryCode, Lat, Lon]
@@ -203,24 +215,6 @@ const map=L.map('leafletmap').setView(,2);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
   attribution:"© OpenStreetMap contributors"
 }).addTo(map);
-
-// Convert 2-letter country code to regional indicator symbols (emoji flag)
-function countryCodeToEmojiFlag(code) {
-  return code.toUpperCase().replace(/./g, char =>
-    String.fromCodePoint(0x1F1E6 - 65 + char.charCodeAt(0))
-  );
-}
-
-countries.forEach(([name, url, code, lat, lon]) => {
-  const emojiFlag = countryCodeToEmojiFlag(code);
-  const icon = L.divIcon({
-    className: 'flag-icon',
-    html: `<span>${emojiFlag}</span>`
-    // Let Leaflet automatically handle size and anchor for better compatibility
-  });
-  const marker = L.marker([lat, lon], {icon: icon}).addTo(map);
-  if(url) marker.on('click', () => { window.open(url, '_blank'); });
-});
 
 </script>
 <div id="region-links" style="text-align:center; margin: 8px 0; font-family: Arial, sans-serif;">
