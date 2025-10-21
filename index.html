@@ -1,74 +1,239 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Grid points over world map</title>
-<style>
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system}
-  .wrap{position:relative;max-width:1200px;margin:12px auto;border:1px solid #ddd;background:#fff}
-  img#map{display:block;width:100%;height:auto;user-select:none}
-  .overlay{position:absolute;inset:0;pointer-events:auto}
-  .pt{position:absolute;transform:translate(50%,-50%);width:6px;height:6px;border-radius:50%;
-      display:flex;align-items:center;justify-content:center;font-size:3px;font-weight:700;
-      color:#fff;background:rgba(220,20,60,0.4);box-shadow:0 1px 3px rgba(0,0,0,.3);
-      -webkit-tap-highlight-color:transparent;cursor:pointer}
-  .controls{display:flex;gap:8px;padding:8px;align-items:center}
-  .info{margin-left:auto;font-size:13px;color:#333}
-  button.small{padding:6px 8px;border-radius:6px;border:1px solid #bbb;background:#f7f7f7}
-  #coords{min-width:160px;padding:6px;border:1px dashed #bbb;background:#fff;border-radius:6px}
-  @media(max-width:520px){.pt{width:16px;height:16px;font-size:10px}}
-</style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Smartraveller Complete World Map (Leaflet)</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+
+    <style>
+        body { margin: 0; background-color: #eaf2f8; font-family: Arial, sans-serif; }
+        #map-container { position: relative; width: 100%; max-width: 1600px; margin: auto; }
+        /* Set a specific height for the map div, essential for Leaflet */
+        #leaflet-map { height: 70vh; width: 100%; }
+
+        /* Custom flag icon size and border */
+        .flag-icon {
+            width: 22px !important;
+            height: 16px !important;
+            border: 1px solid #444;
+            border-radius: 2px;
+            /* Leaflet markers use position: absolute; already */
+        }
+    </style>
 </head>
 <body>
-<div class="wrap" id="wrap">
-  <div class="controls">
-    <button id="toggle" class="small">Hide labels</button>
-    <button id="copyAll" class="small">Copy all coords</button>
-    <div class="info">Click a dot to copy its <code>top,right</code> % — last: <span id="coords">none</span></div>
-  </div>
-  <div style="position:relative">
-    <img id="map" src="https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg" alt="World map"/>
-    <div class="overlay" id="ov"></div>
-  </div>
+<h2 style="text-align:center;">Smartraveller Advisory Map - All Countries 🌎</h2>
+<div id="map-container">
+    <div id="leaflet-map"></div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20n6cT8s9/1co51GngFzYxWz3/z9z0M1S8b1m/y8w+R="
+        crossorigin=""></script>
+
 <script>
-(function(){
-  const ov=document.getElementById('ov'), coords=document.getElementById('coords');
-  let i=0, items=[];
-  for(let t=0;t<=100;t+=0.95){
-    for(let r=0;r<=100;r+=0.7){
-      i++;
-      const s=document.createElement('div');
-      s.className='pt'; s.textContent = i.toString(16).toUpperCase().padStart(2,'0');
-      s.style.top=t+'%'; s.style.right=r+'%';
-      s.dataset.top=t; s.dataset.right=r; s.dataset.n=i;
-      s.title = 'Point '+i+' — top:'+t+'% right:'+r+'%';
-      s.addEventListener('click',e=>{
-        const txt = `${s.dataset.top},${s.dataset.right}`;
-        navigator.clipboard?.writeText(txt).catch(()=>{});
-        coords.textContent = `#${s.dataset.n} ${s.dataset.top}% , ${s.dataset.right}%`;
-      });
-      ov.appendChild(s);
-      items.push({n:i,top:t,right:r});
-    }
-  }
-  // toggle labels (hide numbers but keep markers)
-  const toggle=document.getElementById('toggle');
-  let labelsShown=true;
-  toggle.addEventListener('click',()=>{
-    labelsShown = !labelsShown;
-    document.querySelectorAll('.pt').forEach(p=>p.textContent = labelsShown ? p.dataset.n : '');
-    toggle.textContent = labelsShown ? 'Hide labels' : 'Show labels';
-  });
-  // copy all coords as CSV
-  document.getElementById('copyAll').addEventListener('click',()=>{
-    const csv = items.map(x=>`${x.n},${x.top},${x.right}`).join('\n');
-    navigator.clipboard?.writeText(csv).then(()=>{ alert('All coords copied to clipboard'); }).catch(()=>{});
-  });
-  // ensure overlay scales with image — nothing needed because overlay is absolute inset:0 over the image container
-})();
+    // --- Map Initialization ---
+
+    // Initialize the map and set its view to a geographical center and zoom level
+    // [0, 0] is the center of the world, zoom 2 shows a full world view
+    const map = L.map('leaflet-map').setView([15, 0], 2); 
+
+    // Add a tile layer (the actual map background)
+    // This uses OpenStreetMap tiles, a common choice
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // --- Country Data with Coordinates ---
+
+    // Replaced your percentage-based positions with approximate Latitude and Longitude
+    // Lat/Lon is [Latitude, Longitude]
+    const countries = [
+        // Africa
+        { name: "Angola", url: "https://www.smartraveller.gov.au/destinations/africa/angola", flag: "ao.png", coords: [-11.2027, 17.8739] },
+        { name: "Benin", url: "https://www.smartraveller.gov.au/destinations/africa/benin", flag: "bj.png", coords: [9.3077, 2.3158] },
+        { name: "Botswana", url: "https://www.smartraveller.gov.au/destinations/africa/botswana", flag: "bw.png", coords: [-22.3285, 24.6849] },
+        { name: "Burundi", url: "https://www.smartraveller.gov.au/destinations/africa/burundi", flag: "bi.png", coords: [-3.3734, 29.9189] },
+        { name: "Cameroon", url: "https://www.smartraveller.gov.au/destinations/africa/cameroon", flag: "cm.png", coords: [5.5000, 12.0000] },
+        { name: "Côte d'Ivoire", url: "https://www.smartraveller.gov.au/destinations/africa/cote-divoire", flag: "ci.png", coords: [7.5400, -5.5471] },
+        { name: "Eritrea", url: "https://www.smartraveller.gov.au/destinations/africa/eritrea", flag: "er.png", coords: [15.1794, 39.7823] },
+        { name: "Ethiopia", url: "https://www.smartraveller.gov.au/destinations/africa/ethiopia", flag: "et.png", coords: [8.9806, 38.7578] },
+        { name: "Gabon", url: "https://www.smartraveller.gov.au/destinations/africa/gabon", flag: "ga.png", coords: [-0.8037, 11.6094] },
+        { name: "Ghana", url: "https://www.smartraveller.gov.au/destinations/africa/ghana", flag: "gh.png", coords: [7.9465, -1.0232] },
+        { name: "Guinea", url: "https://www.smartraveller.gov.au/destinations/africa/guinea", flag: "gn.png", coords: [9.9456, -9.6966] },
+        { name: "Kenya", url: "https://www.smartraveller.gov.au/destinations/africa/kenya", flag: "ke.png", coords: [0.0236, 37.9062] },
+        { name: "Liberia", url: "https://www.smartraveller.gov.au/destinations/africa/liberia", flag: "lr.png", coords: [6.4281, -9.4295] },
+        { name: "Madagascar", url: "https://www.smartraveller.gov.au/destinations/africa/madagascar", flag: "mg.png", coords: [-18.7669, 46.8691] },
+        { name: "Malawi", url: "https://www.smartraveller.gov.au/destinations/africa/malawi", flag: "mw.png", coords: [-13.2543, 34.3015] },
+        { name: "Mauritius", url: "https://www.smartraveller.gov.au/destinations/africa/mauritius", flag: "mu.png", coords: [-20.3484, 57.5522] },
+        { name: "Morocco", url: "https://www.smartraveller.gov.au/destinations/africa/morocco", flag: "ma.png", coords: [31.7917, -7.0926] },
+        { name: "Mozambique", url: "https://www.smartraveller.gov.au/destinations/africa/mozambique", flag: "mz.png", coords: [-18.6657, 35.5296] },
+        { name: "Namibia", url: "https://www.smartraveller.gov.au/destinations/africa/namibia", flag: "na.png", coords: [-22.9576, 18.4904] },
+        { name: "Nigeria", url: "https://www.smartraveller.gov.au/destinations/africa/nigeria", flag: "ng.png", coords: [9.0820, 8.6753] },
+        { name: "Rwanda", url: "https://www.smartraveller.gov.au/destinations/africa/rwanda", flag: "rw.png", coords: [-1.9403, 29.8739] },
+        { name: "Senegal", url: "https://www.smartraveller.gov.au/destinations/africa/senegal", flag: "sn.png", coords: [14.4974, -14.4524] },
+        { name: "South Africa", url: "https://www.smartraveller.gov.au/destinations/africa/south-africa", flag: "za.png", coords: [-30.5595, 22.9375] },
+        { name: "Sierra Leone", url: "https://www.smartraveller.gov.au/destinations/africa/sierra-leone", flag: "sl.png", coords: [8.4605, -11.7799] },
+        { name: "Tanzania", url: "https://www.smartraveller.gov.au/destinations/africa/tanzania", flag: "tz.png", coords: [-6.3690, 34.8888] },
+        { name: "Uganda", url: "https://www.smartraveller.gov.au/destinations/africa/uganda", flag: "ug.png", coords: [1.3733, 32.2903] },
+        { name: "Zambia", url: "https://www.smartraveller.gov.au/destinations/africa/zambia", flag: "zm.png", coords: [-13.1339, 27.8493] },
+        { name: "Zimbabwe", url: "https://www.smartraveller.gov.au/destinations/africa/zimbabwe", flag: "zw.png", coords: [-19.0154, 29.1549] },
+
+        // Americas
+        { name: "Argentina", url: "https://www.smartraveller.gov.au/destinations/americas/argentina", flag: "ar.png", coords: [-38.4161, -63.6167] },
+        { name: "Belize", url: "https://www.smartraveller.gov.au/destinations/americas/belize", flag: "bz.png", coords: [17.1899, -88.4976] },
+        { name: "Bolivia", url: "https://www.smartraveller.gov.au/destinations/americas/bolivia", flag: "bo.png", coords: [-16.2902, -63.5887] },
+        { name: "Brazil", url: "https://www.smartraveller.gov.au/destinations/americas/brazil", flag: "br.png", coords: [-14.2350, -51.9253] },
+        { name: "Canada", url: "https://www.smartraveller.gov.au/destinations/americas/canada", flag: "ca.png", coords: [56.1304, -106.3468] },
+        { name: "Chile", url: "https://www.smartraveller.gov.au/destinations/americas/chile", flag: "cl.png", coords: [-35.6751, -71.5430] },
+        { name: "Colombia", url: "https://www.smartraveller.gov.au/destinations/americas/colombia", flag: "co.png", coords: [4.5709, -74.2973] },
+        { name: "Costa Rica", url: "https://www.smartraveller.gov.au/destinations/americas/costa-rica", flag: "cr.png", coords: [9.9281, -84.0907] },
+        { name: "Cuba", url: "https://www.smartraveller.gov.au/destinations/americas/cuba", flag: "cu.png", coords: [21.5218, -77.7812] },
+        { name: "Dominican Republic", url: "https://www.smartraveller.gov.au/destinations/americas/dominican-republic", flag: "do.png", coords: [18.7357, -70.1627] },
+        { name: "Ecuador", url: "https://www.smartraveller.gov.au/destinations/americas/ecuador", flag: "ec.png", coords: [-1.8312, -78.1834] },
+        { name: "El Salvador", url: "https://www.smartraveller.gov.au/destinations/americas/el-salvador", flag: "sv.png", coords: [13.7942, -88.8965] },
+        { name: "Guatemala", url: "https://www.smartraveller.gov.au/destinations/americas/guatemala", flag: "gt.png", coords: [15.7835, -90.2308] },
+        { name: "Honduras", url: "https://www.smartraveller.gov.au/destinations/americas/honduras", flag: "hn.png", coords: [15.2000, -86.2419] },
+        { name: "Jamaica", url: "https://www.smartraveller.gov.au/destinations/americas/jamaica", flag: "jm.png", coords: [18.1096, -77.2975] },
+        { name: "Mexico", url: "https://www.smartraveller.gov.au/destinations/americas/mexico", flag: "mx.png", coords: [23.6345, -102.5528] },
+        { name: "Nicaragua", url: "https://www.smartraveller.gov.au/destinations/americas/nicaragua", flag: "ni.png", coords: [12.8654, -85.2072] },
+        { name: "Panama", url: "https://www.smartraveller.gov.au/destinations/americas/panama", flag: "pa.png", coords: [8.5380, -80.7821] },
+        { name: "Paraguay", url: "https://www.smartraveller.gov.au/destinations/americas/paraguay", flag: "py.png", coords: [-23.4425, -58.4438] },
+        { name: "Peru", url: "https://www.smartraveller.gov.au/destinations/americas/peru", flag: "pe.png", coords: [-9.1900, -75.0152] },
+        { name: "Trinidad and Tobago", url: "https://www.smartraveller.gov.au/destinations/americas/trinidad-and-tobago", flag: "tt.png", coords: [10.6918, -61.2225] },
+        { name: "Uruguay", url: "https://www.smartraveller.gov.au/destinations/americas/uruguay", flag: "uy.png", coords: [-32.5228, -55.7658] },
+        { name: "Venezuela", url: "https://www.smartraveller.gov.au/destinations/americas/venezuela", flag: "ve.png", coords: [6.4238, -66.5897] },
+
+        // Asia
+        { name: "Afghanistan", url: "https://www.smartraveller.gov.au/destinations/asia/afghanistan", flag: "af.png", coords: [33.9391, 67.7100] },
+        { name: "Azerbaijan", url: "https://www.smartraveller.gov.au/destinations/asia/azerbaijan", flag: "az.png", coords: [40.1431, 47.5769] },
+        { name: "Bangladesh", url: "https://www.smartraveller.gov.au/destinations/asia/bangladesh", flag: "bd.png", coords: [23.6850, 90.3563] },
+        { name: "Brunei Darussalam", url: "https://www.smartraveller.gov.au/destinations/asia/brunei-darussalam", flag: "bn.png", coords: [4.5353, 114.7277] },
+        { name: "Cambodia", url: "https://www.smartraveller.gov.au/destinations/asia/cambodia", flag: "kh.png", coords: [12.5657, 104.9910] },
+        { name: "China", url: "https://www.smartraveller.gov.au/destinations/asia/china", flag: "cn.png", coords: [35.8617, 104.1954] },
+        { name: "Indonesia", url: "https://www.smartraveller.gov.au/destinations/asia/indonesia", flag: "id.png", coords: [-0.7893, 113.9213] },
+        { name: "India", url: "https://www.smartraveller.gov.au/destinations/asia/india", flag: "in.png", coords: [20.5937, 78.9629] },
+        { name: "Iran", url: "https://www.smartraveller.gov.au/destinations/asia/iran", flag: "ir.png", coords: [32.4279, 53.6880] },
+        { name: "Iraq", url: "https://www.smartraveller.gov.au/destinations/asia/iraq", flag: "iq.png", coords: [33.2232, 43.6793] },
+        { name: "Israel", url: "https://www.smartraveller.gov.au/destinations/asia/israel", flag: "il.png", coords: [31.0461, 34.8516] },
+        { name: "Japan", url: "https://www.smartraveller.gov.au/destinations/asia/japan", flag: "jp.png", coords: [36.2048, 138.2529] },
+        { name: "Jordan", url: "https://www.smartraveller.gov.au/destinations/asia/jordan", flag: "jo.png", coords: [30.5852, 36.2384] },
+        { name: "Kazakhstan", url: "https://www.smartraveller.gov.au/destinations/asia/kazakhstan", flag: "kz.png", coords: [48.0196, 66.9237] },
+        { name: "Kuwait", url: "https://www.smartraveller.gov.au/destinations/asia/kuwait", flag: "kw.png", coords: [29.3117, 47.4818] },
+        { name: "Laos", url: "https://www.smartraveller.gov.au/destinations/asia/laos", flag: "la.png", coords: [19.8563, 102.4955] },
+        { name: "Lebanon", url: "https://www.smartraveller.gov.au/destinations/asia/lebanon", flag: "lb.png", coords: [33.8547, 35.8623] },
+        { name: "Malaysia", url: "https://www.smartraveller.gov.au/destinations/asia/malaysia", flag: "my.png", coords: [4.2105, 107.0311] },
+        { name: "Maldives", url: "https://www.smartraveller.gov.au/destinations/asia/maldives", flag: "mv.png", coords: [3.2028, 73.2207] },
+        { name: "Mongolia", url: "https://www.smartraveller.gov.au/destinations/asia/mongolia", flag: "mn.png", coords: [46.8625, 103.8467] },
+        { name: "Myanmar", url: "https://www.smartraveller.gov.au/destinations/asia/myanmar", flag: "mm.png", coords: [21.9139, 95.9562] },
+        { name: "Nepal", url: "https://www.smartraveller.gov.au/destinations/asia/nepal", flag: "np.png", coords: [28.3949, 84.1240] },
+        { name: "Pakistan", url: "https://www.smartraveller.gov.au/destinations/asia/pakistan", flag: "pk.png", coords: [30.3753, 69.3451] },
+        { name: "Philippines", url: "https://www.smartraveller.gov.au/destinations/asia/philippines", flag: "ph.png", coords: [12.8797, 121.7740] },
+        { name: "Qatar", url: "https://www.smartraveller.gov.au/destinations/asia/qatar", flag: "qa.png", coords: [25.3548, 51.1839] },
+        { name: "South Korea", url: "https://www.smartraveller.gov.au/destinations/asia/south-korea", flag: "kr.png", coords: [35.9078, 127.7669] },
+        { name: "Sri Lanka", url: "https://www.smartraveller.gov.au/destinations/asia/sri-lanka", flag: "lk.png", coords: [7.8731, 80.7718] },
+        { name: "Singapore", url: "https://www.smartraveller.gov.au/destinations/asia/singapore", flag: "sg.png", coords: [1.3521, 103.8198] },
+        { name: "Syria", url: "https://www.smartraveller.gov.au/destinations/asia/syria", flag: "sy.png", coords: [34.8021, 38.9968] },
+        { name: "Taiwan", url: "https://www.smartraveller.gov.au/destinations/asia/taiwan", flag: "tw.png", coords: [23.6978, 120.9605] },
+        { name: "Tajikistan", url: "https://www.smartraveller.gov.au/destinations/asia/tajikistan", flag: "tj.png", coords: [38.8610, 71.2761] },
+        { name: "Thailand", url: "https://www.smartraveller.gov.au/destinations/asia/thailand", flag: "th.png", coords: [15.8700, 100.9925] },
+        { name: "Timor-Leste", url: "https://www.smartraveller.gov.au/destinations/asia/timor-leste", flag: "tl.png", coords: [-8.8742, 125.7275] },
+        { name: "Turkmenistan", url: "https://www.smartraveller.gov.au/destinations/asia/turkmenistan", flag: "tm.png", coords: [38.9697, 60.1098] },
+        { name: "Uzbekistan", url: "https://www.smartraveller.gov.au/destinations/asia/uzbekistan", flag: "uz.png", coords: [41.3775, 64.5853] },
+        { name: "Vietnam", url: "https://www.smartraveller.gov.au/destinations/asia/vietnam", flag: "vn.png", coords: [14.0583, 108.2772] },
+
+        // Europe
+        { name: "Albania", url: "https://www.smartraveller.gov.au/destinations/europe/albania", flag: "al.png", coords: [41.1533, 20.1683] },
+        { name: "Austria", url: "https://www.smartraveller.gov.au/destinations/europe/austria", flag: "at.png", coords: [47.5162, 14.5501] },
+        { name: "Belarus", url: "https://www.smartraveller.gov.au/destinations/europe/belarus", flag: "by.png", coords: [53.7098, 27.9534] },
+        { name: "Belgium", url: "https://www.smartraveller.gov.au/destinations/europe/belgium", flag: "be.png", coords: [50.8333, 4.0000] },
+        { name: "Bosnia and Herzegovina", url: "https://www.smartraveller.gov.au/destinations/europe/bosnia-and-herzegovina", flag: "ba.png", coords: [43.9159, 17.6791] },
+        { name: "Bulgaria", url: "https://www.smartraveller.gov.au/destinations/europe/bulgaria", flag: "bg.png", coords: [42.7339, 25.4858] },
+        { name: "Cyprus", url: "https://www.smartraveller.gov.au/destinations/europe/cyprus", flag: "cy.png", coords: [35.1264, 33.4299] },
+        { name: "Czech Republic", url: "https://www.smartraveller.gov.au/destinations/europe/czech-republic", flag: "cz.png", coords: [49.8175, 15.4730] },
+        { name: "Croatia", url: "https://www.smartraveller.gov.au/destinations/europe/croatia", flag: "hr.png", coords: [45.1000, 15.2000] },
+        { name: "Estonia", url: "https://www.smartraveller.gov.au/destinations/europe/estonia", flag: "ee.png", coords: [58.5953, 25.0136] },
+        { name: "Finland", url: "https://www.smartraveller.gov.au/destinations/europe/finland", flag: "fi.png", coords: [61.9241, 25.7482] },
+        { name: "France", url: "https://www.smartraveller.gov.au/destinations/europe/france", flag: "fr.png", coords: [46.2276, 2.2137] },
+        { name: "Germany", url: "https://www.smartraveller.gov.au/destinations/europe/germany", flag: "de.png", coords: [51.1657, 10.4515] },
+        { name: "Greece", url: "https://www.smartraveller.gov.au/destinations/europe/greece", flag: "gr.png", coords: [39.0742, 21.8243] },
+        { name: "Hungary", url: "https://www.smartraveller.gov.au/destinations/europe/hungary", flag: "hu.png", coords: [47.1625, 19.5033] },
+        { name: "Ireland", url: "https://www.smartraveller.gov.au/destinations/europe/ireland", flag: "ie.png", coords: [53.4129, -8.2439] },
+        { name: "Italy", url: "https://www.smartraveller.gov.au/destinations/europe/italy", flag: "it.png", coords: [41.8719, 12.5674] },
+        { name: "Latvia", url: "https://www.smartraveller.gov.au/destinations/europe/latvia", flag: "lv.png", coords: [56.8796, 24.6032] },
+        { name: "Lithuania", url: "https://www.smartraveller.gov.au/destinations/europe/lithuania", flag: "lt.png", coords: [55.1694, 23.8813] },
+        { name: "Luxembourg", url: "https://www.smartraveller.gov.au/destinations/europe/luxembourg", flag: "lu.png", coords: [49.8153, 6.1296] },
+        { name: "Malta", url: "https://www.smartraveller.gov.au/destinations/europe/malta", flag: "mt.png", coords: [35.9375, 14.3754] },
+        { name: "Moldova", url: "https://www.smartraveller.gov.au/destinations/europe/moldova", flag: "md.png", coords: [47.4116, 28.3699] },
+        { name: "Montenegro", url: "https://www.smartraveller.gov.au/destinations/europe/montenegro", flag: "me.png", coords: [42.7087, 19.3744] },
+        { name: "Netherlands", url: "https://www.smartraveller.gov.au/destinations/europe/netherlands", flag: "nl.png", coords: [52.1326, 5.2913] },
+        { name: "North Macedonia", url: "https://www.smartraveller.gov.au/destinations/europe/north-macedonia", flag: "mk.png", coords: [41.6086, 21.7453] },
+        { name: "Norway", url: "https://www.smartraveller.gov.au/destinations/europe/norway", flag: "no.png", coords: [60.4720, 8.4689] },
+        { name: "Poland", url: "https://www.smartraveller.gov.au/destinations/europe/poland", flag: "pl.png", coords: [51.9194, 19.1451] },
+        { name: "Portugal", url: "https://www.smartraveller.gov.au/destinations/europe/portugal", flag: "pt.png", coords: [39.3999, -8.2245] },
+        { name: "Romania", url: "https://www.smartraveller.gov.au/destinations/europe/romania", flag: "ro.png", coords: [45.9432, 24.9668] },
+        { name: "Russia", url: "https://www.smartraveller.gov.au/destinations/europe/russia", flag: "ru.png", coords: [61.5240, 105.3188] },
+        { name: "Serbia", url: "https://www.smartraveller.gov.au/destinations/europe/serbia", flag: "rs.png", coords: [44.0165, 21.0059] },
+        { name: "Slovakia", url: "https://www.smartraveller.gov.au/destinations/europe/slovakia", flag: "sk.png", coords: [48.6690, 19.6990] },
+        { name: "Slovenia", url: "https://www.smartraveller.gov.au/destinations/europe/slovenia", flag: "si.png", coords: [46.1512, 14.9955] },
+        { name: "Spain", url: "https://www.smartraveller.gov.au/destinations/europe/spain", flag: "es.png", coords: [40.4637, -3.7492] },
+        { name: "Sweden", url: "https://www.smartraveller.gov.au/destinations/europe/sweden", flag: "se.png", coords: [60.1282, 18.6435] },
+        { name: "Switzerland", url: "https://www.smartraveller.gov.au/destinations/europe/switzerland", flag: "ch.png", coords: [46.8182, 8.2275] },
+        { name: "Türkiye", url: "https://www.smartraveller.gov.au/destinations/europe/turkiye", flag: "tr.png", coords: [38.9637, 35.2433] },
+        { name: "Ukraine", url: "https://www.smartraveller.gov.au/destinations/europe/ukraine", flag: "ua.png", coords: [48.3794, 31.1656] },
+        { name: "United Kingdom", url: "https://www.smartraveller.gov.au/destinations/europe/united-kingdom", flag: "gb.png", coords: [55.3781, -3.4360] },
+
+        // Middle East (some overlap with Asia/Europe entries, kept for completeness)
+        { name: "Bahrain", url: "https://www.smartraveller.gov.au/destinations/middle-east/bahrain", flag: "bh.png", coords: [25.9304, 50.6378] },
+        { name: "Oman", url: "https://www.smartraveller.gov.au/destinations/middle-east/oman", flag: "om.png", coords: [21.5125, 55.9233] },
+        { name: "Saudi Arabia", url: "https://www.smartraveller.gov.au/destinations/middle-east/saudi-arabia", flag: "sa.png", coords: [23.8859, 45.0792] },
+        { name: "United Arab Emirates", url: "https://www.smartraveller.gov.au/destinations/middle-east/united-arab-emirates", flag: "ae.png", coords: [23.4241, 53.8478] },
+        { name: "Yemen", url: "https://www.smartraveller.gov.au/destinations/middle-east/yemen", flag: "ye.png", coords: [15.5527, 48.5164] },
+
+        // Oceania / Pacific
+        { name: "Australia", url: "https://www.smartraveller.gov.au/destinations/pacific/australia", flag: "au.png", coords: [-25.2744, 133.7751] },
+        { name: "Fiji", url: "https://www.smartraveller.gov.au/destinations/pacific/fiji", flag: "fj.png", coords: [-17.7134, 178.0650] },
+        { name: "Guam", url: "https://www.smartraveller.gov.au/destinations/pacific/guam", flag: "gu.png", coords: [13.4443, 144.7937] },
+        { name: "Marshall Islands", url: "https://www.smartraveller.gov.au/destinations/pacific/marshall-islands", flag: "mh.png", coords: [7.1315, 171.1850] },
+        { name: "Niue", url: "https://www.smartraveller.gov.au/destinations/pacific/niue", flag: "nu.png", coords: [-19.0544, -169.8672] },
+        { name: "New Caledonia", url: "https://www.smartraveller.gov.au/destinations/pacific/new-caledonia", flag: "nc.png", coords: [-20.9043, 165.6180] },
+        { name: "New Zealand", url: "https://www.smartraveller.gov.au/destinations/pacific/new-zealand", flag: "nz.png", coords: [-40.9006, 174.8860] },
+        { name: "Palau", url: "https://www.smartraveller.gov.au/destinations/pacific/palau", flag: "pw.png", coords: [7.5149, 134.5825] },
+        { name: "Papua New Guinea", url: "https://www.smartraveller.gov.au/destinations/pacific/papua-new-guinea", flag: "pg.png", coords: [-6.3150, 143.9555] },
+        { name: "Samoa", url: "https://www.smartraveller.gov.au/destinations/pacific/samoa", flag: "ws.png", coords: [-13.7590, -172.1046] },
+        { name: "Solomon Islands", url: "https://www.smartraveller.gov.au/destinations/pacific/solomon-islands", flag: "sb.png", coords: [-9.6457, 160.1562] },
+        { name: "Tonga", url: "https://www.smartraveller.gov.au/destinations/pacific/tonga", flag: "to.png", coords: [-20.9167, -174.5000] },
+        { name: "Vanuatu", url: "https://www.smartraveller.gov.au/destinations/pacific/vanuatu", flag: "vu.png", coords: [-15.3768, 166.9592] }
+    ];
+
+    // --- Marker Generation ---
+    const flagBaseUrl = "https://flagcdn.com/w20/";
+
+    countries.forEach(country => {
+        // 1. Define a custom icon for the flag
+        const flagIcon = L.divIcon({
+            className: 'custom-flag-marker',
+            html: `<a href="${country.url}" target="_blank" title="${country.name}">
+                       <img class="flag-icon" src="${flagBaseUrl}${country.flag}" alt="${country.name} Flag" />
+                   </a>`,
+            iconSize: [22, 16], // Must match .flag-icon CSS for correct sizing/placement
+            iconAnchor: [11, 8] // Center the icon (half of iconSize)
+        });
+
+        // 2. Create the marker using the icon and coordinates
+        L.marker(country.coords, { icon: flagIcon })
+            .addTo(map)
+            .bindTooltip(country.name, {
+                permanent: false, 
+                direction: 'top' 
+            }); // Adds a tooltip on hover
+    });
+
 </script>
 </body>
 </html>
