@@ -38,7 +38,7 @@
   const ov=document.getElementById('ov'), coords=document.getElementById('coords');
   let i=0, items=[];
   for(let t=0;t<=100;t+=1.25){
-    for(let r=0;r<=100;r+=0.8){
+    for(let r=0;r<=100;r+=1){
       i++;
       const s=document.createElement('div');
       s.className='pt'; s.textContent = i.toString(16).toUpperCase().padStart(2,'0');
