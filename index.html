@@ -32,11 +32,8 @@
   Smartraveller Advisory Map
   <div style="display: inline-block; text-align: center; margin-left: 10px;">
     <label id="basicInfoToggleLabel" style="cursor:pointer; font-weight:normal; font-size:14px;">
-      Basic Country Info <input type="checkbox" id="basicInfoToggle" style="margin-left:6px; vertical-align:middle;">
+      📳•🪙•🔌<input type="checkbox" id="basicInfoToggle" style="margin-left:6px; vertical-align:middle;">
     </label>
-    <div style="font-size:10px; color:#555; font-family: Arial, sans-serif; margin-top: 4px;">
-      (area code • currency • plug type)
-    </div>
   </div>
 </h3>
 <div id="leafletmap"></div>
@@ -45,7 +42,7 @@
 // Create a marker icon showing flag plus optional info below it
 const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode = '', plugType = '', showInfo = false) => {
   const infoHtml = showInfo ? `<div style="font-weight:bold; color:red; font-family: Arial, sans-serif; font-size:11px; margin: 2px 0 0 0; white-space: nowrap;">
-    ${isoCode}•${areaCode}•${plugType}
+    ${isoCode}•${currencyCode}•${areaCode}•${plugType}
   </div>` : '';
 
   const html = `<div style="text-align:center; display: inline-block;">
