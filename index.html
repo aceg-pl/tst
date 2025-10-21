@@ -19,6 +19,16 @@ body{margin:0;background:#eaf2f8;font-family:Arial,sans-serif;}
 const flagIcon=u=>L.icon({iconUrl:u,iconSize:[22,16],iconAnchor:[11,8],className:'flag-icon'});
 const countries=[
   // [Country, AdvisoryURL, FlagPNG, Lat, Lon]
+  // North Africa
+  ["Algeria","https://www.smartraveller.gov.au/destinations/africa/algeria","https://flagcdn.com/w20/dz.png",28.0,1.66],
+  ["Libya","https://www.smartraveller.gov.au/destinations/africa/libya","https://flagcdn.com/w20/ly.png",26.34,17.23],
+  ["Tunisia","https://www.smartraveller.gov.au/destinations/africa/tunisia","https://flagcdn.com/w20/tn.png",33.8869,9.5375],
+  ["Egypt","https://www.smartraveller.gov.au/destinations/africa/egypt","https://flagcdn.com/w20/eg.png",26.82,30.8],
+  ["Morocco","https://www.smartraveller.gov.au/destinations/africa/morocco","https://flagcdn.com/w20/ma.png",32.0,-5.0],
+  ["Mauritania","https://www.smartraveller.gov.au/destinations/africa/mauritania","https://flagcdn.com/w20/mr.png",21.0,-10.94],
+  ["Sudan","https://www.smartraveller.gov.au/destinations/africa/sudan","https://flagcdn.com/w20/sd.png",15.0,30.0],
+  ["Western Sahara","https://www.smartraveller.gov.au/destinations/africa/western-sahara","https://flagcdn.com/w20/eh.png",24.2155,-12.8858],
+  // South Africa
   ["Angola","https://www.smartraveller.gov.au/destinations/africa/angola","https://flagcdn.com/w20/ao.png",-12.5,18.5],
   ["Benin","https://www.smartraveller.gov.au/destinations/africa/benin","https://flagcdn.com/w20/bj.png",9.5,2.25],
   ["Botswana","https://www.smartraveller.gov.au/destinations/africa/botswana","https://flagcdn.com/w20/bw.png",-22.0,24.0],
@@ -183,9 +193,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
   attribution:"© OpenStreetMap contributors"
 }).addTo(map);
 countries.forEach(([n,u,f,lat,lon])=>{
-  L.marker([lat,lon],{icon:flagIcon(f)})
-    .addTo(map)
-    .bindPopup(`<a href="${u}" target="_blank">${n}</a>`)
+const marker=L.marker([lat,lon],{icon:flagIcon(f)}).addTo(map);
+marker.on('click',()=>{window.open(u,'_blank')});
 });
 </script>
 </body>
