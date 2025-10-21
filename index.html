@@ -42,8 +42,8 @@
 // Create a marker icon showing flag plus optional info below it
 const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode = '', plugType = '', showInfo = false) => {
   const fixedWidth = 90; // fixed icon width, prevent shifting
-  const infoHtml = showInfo ? `<div style="font-weight:bold; color:red; font-family: Arial, sans-serif; font-size:11px; margin: 2px 0 0 0; white-space: nowrap;">
-    ${isoCode} / ${areaCode} / 🔌${plugType}
+  const infoHtml = showInfo ? `<div style="font-weight:bold; color:blue; font-family: Arial, sans-serif; font-size:11px; margin: 2px 0 0 0; white-space: nowrap;">
+    ${isoCode}: ${areaCode}|${currencyCode}|${plugType}
   </div>` : '';
 
   const html = `<div style="text-align:center; display: inline-block; width: ${fixedWidth}px;">
