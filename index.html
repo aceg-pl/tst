@@ -46,8 +46,8 @@ const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode 
     <img src="${flagUrl}" style="width:22px; height:16px; border:1px solid #444; border-radius:2px;">
     <span>${isoCode}</span>
   </div>
-  ${showInfo ? `<div style="font-weight:bold; color:red; margin-top:1px; white-space: nowrap;">
-    📞${areaCode} 🪙${currencyCode} 🔌${plugType}
+  ${showInfo ? `<div style="font-weight:bold; color:red; margin-top:0px; white-space: nowrap;">
+    ${areaCode}•${currencyCode}•${plugType}
   </div>` : ""}
 </div>`;
 return L.divIcon({
