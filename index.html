@@ -42,7 +42,7 @@
 // Create a marker icon showing flag plus optional info below it
 const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode = '', plugType = '', showInfo = false) => {
   const infoHtml = showInfo ? `<div style="font-weight:bold; color:blue; font-family: Arial, sans-serif; font-size:11px; margin: 2px 0 0 0; white-space: nowrap;">
-    ${isoCode}:${currencyCode}•${areaCode}•${plugType}
+    ${isoCode}: ${currencyCode}|${areaCode}|${plugType}
   </div>` : '';
 
   const html = `<div style="text-align:center; display: inline-block;">
