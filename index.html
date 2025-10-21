@@ -44,23 +44,21 @@
 <script>
 // Create a marker icon showing flag plus optional info below it
 const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode = '', plugType = '', showInfo = false) => {
-  let html = `<div style="text-align:center;
-                       font-family: Arial, sans-serif;
-                       font-size: 11px;">
-  <div style="display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-weight: bold; color: red;">
-    <img src="${flagUrl}" style="width:22px; height:16px; border:1px solid #444; border-radius:2px;">
-    <span>${isoCode}</span>
-  </div>
-  ${showInfo ? `<div style="font-weight:bold; color:red; margin-top:0px; white-space: nowrap;">
-    ${areaCode}•${currencyCode}•${plugType}
-  </div>` : ""}
-</div>`;
-return L.divIcon({
-  html: html,
-  className: '',
-  iconSize: [140, showInfo ? 40 : 20],  // adjust height for 2 lines if showing info
-  iconAnchor: [70, showInfo ? 40 : 10]
-});
+  const infoHtml = showInfo ? `<div style="font-weight:bold; color:red; font-family: Arial, sans-serif; font-size:11px; margin: 2px 0 0 0; white-space: nowrap;">
+    ${isoCode}•${areaCode}•${plugType}
+  </div>` : '';
+
+  const html = `<div style="text-align:center; display: inline-block;">
+    <img src="${flagUrl}" style="width:22px; height:16px; border:1px solid #444; border-radius:2px; display:block; margin: 0 auto;"/>
+    ${infoHtml}
+  </div>`;
+
+  return L.divIcon({
+    html: html,
+    className: '', 
+    iconSize: [90, showInfo ? 36 : 20],       // fixed height for icon with/without extra info
+    iconAnchor: [45, 16]                      // anchor at bottom center of flag image (16px height)
+  });
 };
 
   const countries = [
