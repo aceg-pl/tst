@@ -39,16 +39,16 @@
 <script>
 // Use DivIcon to show flag + optional text next to marker
 const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', showInfo = false) => {
-  let html = `<img src="${flagUrl}" style="width:22px;height:16px; border:1px solid #444; border-radius:2px; vertical-align:middle;">`;
-  if(showInfo){
-    html += ` <span style="font-size:11px; white-space: nowrap; vertical-align:middle; font-family: Arial, sans-serif;">${isoCode} / ${areaCode}</span>`;
-  }
-  return L.divIcon({
-    html: html,
-    className: '', // remove default styles
-    iconSize: [showInfo ? 90 : 24, 20],
-    iconAnchor: [showInfo ? 45 : 11, 10]
-  });
+let html = `<div style="text-align:center;">
+  <img src="${flagUrl}" style="width:22px;height:16px; border:1px solid #444; border-radius:2px;">
+  ${showInfo ? `<div style="font-weight:bold; color:darkorange; font-size:11px; font-family: Arial, sans-serif; margin-top:2px;">${isoCode}<br>${areaCode}</div>` : ""}
+</div>`;
+return L.divIcon({
+  html: html,
+  className: '',
+  iconSize: [24, showInfo ? 36 : 20],
+  iconAnchor: [12, showInfo ? 36 : 10]
+});
 };
 
   const countries = [
