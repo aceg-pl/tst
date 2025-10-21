@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Grid points over world map</title>
+<style>
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system}
+  .wrap{position:relative;max-width:1200px;margin:12px auto;border:1px solid #ddd;background:#fff}
+  img#map{display:block;width:100%;height:auto;user-select:none}
+  .overlay{position:absolute;inset:0;pointer-events:auto}
+  .pt{position:absolute;transform:translate(50%,-50%);width:20px;height:20px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+      color:#fff;background:rgba(220,20,60,0.95);box-shadow:0 1px 3px rgba(0,0,0,.3);
+      -webkit-tap-highlight-color:transparent;cursor:pointer}
+  .controls{display:flex;gap:8px;padding:8px;align-items:center}
+  .info{margin-left:auto;font-size:13px;color:#333}
+  button.small{padding:6px 8px;border-radius:6px;border:1px solid #bbb;background:#f7f7f7}
+  #coords{min-width:160px;padding:6px;border:1px dashed #bbb;background:#fff;border-radius:6px}
+  @media(max-width:520px){.pt{width:16px;height:16px;font-size:10px}}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+  <div class="controls">
+    <button id="toggle" class="small">Hide labels</button>
+    <button id="copyAll" class="small">Copy all coords</button>
+    <div class="info">Click a dot to copy its <code>top,right</code> % — last: <span id="coords">none</span></div>
+  </div>
+  <div style="position:relative">
+    <img id="map" src="https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg" alt="World map"/>
+    <div class="overlay" id="ov"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const ov=document.getElementById('ov'), coords=document.getElementById('coords');
+  let i=0, items=[];
+  for(let t=0;t<=100;t+=10){
+    for(let r=0;r<=100;r+=10){
+      i++;
+      const s=document.createElement('div');
+      s.className='pt'; s.textContent=i;
+      s.style.top=t+'%'; s.style.right=r+'%';
+      s.dataset.top=t; s.dataset.right=r; s.dataset.n=i;
+      s.title = 'Point '+i+' — top:'+t+'% right:'+r+'%';
+      s.addEventListener('click',e=>{
+        const txt = `${s.dataset.top},${s.dataset.right}`;
+        navigator.clipboard?.writeText(txt).catch(()=>{});
+        coords.textContent = `#${s.dataset.n} ${s.dataset.top}% , ${s.dataset.right}%`;
+      });
+      ov.appendChild(s);
+      items.push({n:i,top:t,right:r});
+    }
+  }
+  // toggle labels (hide numbers but keep markers)
+  const toggle=document.getElementById('toggle');
+  let labelsShown=true;
+  toggle.addEventListener('click',()=>{
+    labelsShown = !labelsShown;
+    document.querySelectorAll('.pt').forEach(p=>p.textContent = labelsShown ? p.dataset.n : '');
+    toggle.textContent = labelsShown ? 'Hide labels' : 'Show labels';
+  });
+  // copy all coords as CSV
+  document.getElementById('copyAll').addEventListener('click',()=>{
+    const csv = items.map(x=>`${x.n},${x.top},${x.right}`).join('\n');
+    navigator.clipboard?.writeText(csv).then(()=>{ alert('All coords copied to clipboard'); }).catch(()=>{});
+  });
+  // ensure overlay scales with image — nothing needed because overlay is absolute inset:0 over the image container
+})();
+</script>
+</body>
+</html>
