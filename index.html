@@ -18,16 +18,15 @@
     text-align:center;
     position:relative;
   }
-  #basicInfoToggleLabel, #weatherInfoToggleLabel {
-    text-align:center; 
-    position:relative; 
-    font-weight: normal; 
+  #basicInfoToggleLabel {
     cursor: pointer; 
-    font-size: 14px; 
-    margin-left: 15px; 
+    font-weight: normal; 
+    font-size: 12px;
+    text-align: center;
     display: inline-block;
+    position: relative;
   }
-  #basicInfoToggle, #weatherInfoToggle {
+  #basicInfoToggle {
     margin-left: 6px; 
     vertical-align: middle;
   }
@@ -42,28 +41,22 @@
   }
 </style>
 
-<!-- SunCalc library for sunrise/sunset calculation -->
 <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.min.js"></script>
-
 </head>
 <body>
 <h3 style="position:relative; text-align:center;">
   Travel Risk & Info Map
   <div style="display:inline-block; text-align:center; margin-left:10px;">
-    <label id="basicInfoToggleLabel" style="cursor:pointer; font-weight:normal; font-size:12px;">
-      Additional info: ☎️ Area Code 💲Currency 🔌 Plug Type 🕥 Time (Capital)
-      <input type="checkbox" id="basicInfoToggle" style="margin-left:6px; vertical-align:middle;">
-    </label>
-    <label id="weatherInfoToggleLabel" style="text-align:center; position:relative; font-weight: normal; cursor: pointer; font-size: 14px; margin-left: 15px; display: inline-block;">
-      Weather ☀️
-      <input type="checkbox" id="weatherInfoToggle" style="margin-left:6px; vertical-align: middle;">
+    <label id="basicInfoToggleLabel">
+      Basic Info & Weather: ☎️ Area Code 💲Currency 🔌 Plug Type 🕥 Time (Capital) ☀️ Weather
+      <input type="checkbox" id="basicInfoToggle">
     </label>
   </div>
 </h3>
 
 <div id="leafletmap"></div>
 
-<div id="plugTypesSection" style="text-align:center; margin-top:20px; font-family: Arial, sans-serif; max-width: 480px; margin-left: auto; margin-right: auto;">
+<div id="plugTypesSection">
   <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">Plug Types:</div>
   <div style="display: flex; justify-content: center; gap: 1px;">
     <img src="https://raw.githubusercontent.com/aceg-pl/rsk/main/plug_ABCD.jpeg" alt="Plug ABCD" style="width: 70%; border: 1px solid #ccc; border-radius: 4px;" />
@@ -462,28 +455,23 @@ const createFlagLabelIcon = (
   weather = null, showWeather = false,
   sunrise = 'N/A', sunset = 'N/A'
 ) => {
-  const fixedWidth = 90;
-  const infoHtml = showInfo ? `<div style="font-weight:bold; color:navy; font-family: Arial, sans-serif; font-size:11px; margin: 2px 0 0 0; white-space: nowrap;">
-    ${isoCode}: ${areaCode}|${currencyCode}|${plugType}|${getOfficialCapitalTime(isoCode)}
-  </div>` : '';
-
-  const weatherHtml = (showWeather && weather) ? `
+  const fixedWidth = 140; // wide to accommodate all info in one block
+  const combinedHtml = showInfo ? `
     <div style="font-weight:bold; color:navy; font-family: Arial, sans-serif; font-size:11px; margin: 0px 0 0 0; white-space: nowrap;">
       ${weather.temperature}°C|${weather.windspeed} kmh|UV ${weather.uv}<br>
-      ☀️ ${sunrise}|🌙 ${sunset                                                                                       
+      ☀️ ${sunrise}|🌙 ${sunset}                                                                                       
     </div>
   ` : '';
 
   const html = `<div style="text-align:center; display: inline-block; width: ${fixedWidth}px;">
-    <img src="${flagUrl}" style="width:22px; height:16px; border:1px solid #444; border-radius:2px; display:block; margin: 0 auto;"/>
-    ${infoHtml}
-    ${weatherHtml}
+    <img src="${flagUrl}" style="width:22px; height:16px; border:1px solid #444; border-radius:2px; display:block; margin: 0 auto 4px auto;"/>
+    ${combinedHtml}
   </div>`;
 
   return L.divIcon({
     html: html,
     className: '',
-    iconSize: [fixedWidth, showWeather ? 80 : (showInfo ? 36 : 20)],
+    iconSize: [fixedWidth, showInfo ? (showWeather ? 60 : 30) : 20],
     iconAnchor: [fixedWidth / 2, 16]
   });
 };
@@ -511,35 +499,19 @@ countries.forEach(([name, url, flag, lat, lon, isoCode, areaCode, currencyCode, 
 
 window.addEventListener('DOMContentLoaded', () => {
   const basicInfoToggle = document.getElementById('basicInfoToggle');
-  const weatherInfoToggle = document.getElementById('weatherInfoToggle');
 
-  basicInfoToggle.addEventListener('change', e => {
-    const showInfo = e.target.checked;
-    const plugSection = document.getElementById('plugTypesSection');
-    plugSection.style.display = showInfo ? 'block' : 'none';
+  basicInfoToggle.addEventListener('change', async e => {
+    const show = e.target.checked;
 
-    if (showInfo) {
+    document.getElementById('plugTypesSection').style.display = show ? 'block' : 'none';
+
+    if (show) {
       map.setView([52.0, 20.0], 5);
     } else {
       map.setView([10, 20], 2);
     }
 
-    const showWeather = weatherInfoToggle.checked;
-
-    markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon, lat }) => {
-      const sunTimes = getSunTimes(lat, lon);
-      marker.setIcon(createFlagLabelIcon(
-        flag, isoCode, areaCode, currencyCode, plugType,
-        showInfo, lon, weatherData.get(isoCode), showWeather,
-        sunTimes.sunrise, sunTimes.sunset
-      ));
-    });
-  });
-
-  weatherInfoToggle.addEventListener('change', async e => {
-    const showWeather = e.target.checked;
-
-    if (showWeather) {
+    if (show) {
       await Promise.all(markers.map(async m => {
         if (!weatherData.has(m.isoCode)) {
           const wx = await fetchWeather(m.lat, m.lon);
@@ -548,13 +520,11 @@ window.addEventListener('DOMContentLoaded', () => {
       }));
     }
 
-    const basicInfoChecked = basicInfoToggle.checked;
-
     markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon, lat }) => {
       const sunTimes = getSunTimes(lat, lon);
       marker.setIcon(createFlagLabelIcon(
         flag, isoCode, areaCode, currencyCode, plugType,
-        basicInfoChecked, lon, weatherData.get(isoCode), showWeather,
+        show, lon, weatherData.get(isoCode), show,
         sunTimes.sunrise, sunTimes.sunset
       ));
     });
