@@ -457,9 +457,9 @@ const createFlagLabelIcon = (
 ) => {
   const fixedWidth = 140; // wide to accommodate all info in one block
   const combinedHtml = showInfo ? `
-    <div style="font-weight:bold; color:navy; font-family: Arial, sans-serif; font-size:11px; margin: 0px 0 0 0; white-space: nowrap;">
-      ${weather.temperature}°C|${weather.windspeed} kmh|UV ${weather.uv}<br>
-      ☀️ ${sunrise}|🌙 ${sunset}                                                                                       
+   <div style="font-weight:bold; color:navy; font-family: Arial, sans-serif; font-size:11px; white-space: nowrap;">
+      ${isoCode}: ${areaCode} | ${currencyCode} | ${plugType} | ${getOfficialCapitalTime(isoCode)}
+      ${showWeather && weather ? `<br>${weather.temperature}°C|${weather.windspeed} kmh|UV ${weather.uv}<br>☀️ ${sunrise}|🌙 ${sunset}` : ''}
     </div>
   ` : '';
 
