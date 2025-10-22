@@ -10,6 +10,7 @@
 
 <title>Travel Map</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
 <style>
   body { margin:0; background:#eaf2f8; font-family: Arial,sans-serif; }
   #leafletmap { height:600px; width:100%; max-width:1600px; margin:auto; }
@@ -40,6 +41,10 @@
     margin-right: auto;
   }
 </style>
+
+<!-- SunCalc library for sunrise/sunset calculation -->
+<script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.min.js"></script>
+
 </head>
 <body>
 <h3 style="position:relative; text-align:center;">
@@ -74,7 +79,6 @@
 <script>
 
 // Your countries array.
-
 const countries = [
   ["Algeria","https://www.smartraveller.gov.au/destinations/africa/algeria","https://flagcdn.com/w20/dz.png",28.0,1.66,"DZ","+213","DZD","CF"],
   ["Libya","https://www.smartraveller.gov.au/destinations/africa/libya","https://flagcdn.com/w20/ly.png",26.34,17.23,"LY","+218","LYD","CF"],
@@ -391,14 +395,12 @@ const capitalTimeZones = {
   "SB": "Pacific/Guadalcanal",
   "TO": "Pacific/Tongatapu",
   "VU": "Pacific/Efate"
-  // Extend as needed
 };
 
-// Weather data cache
 const weatherData = new Map();
 
 async function fetchWeather(lat, lon) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=uv_index,sunrise,sunset&timezone=auto`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=uv_index&timezone=auto`;
   try {
     const response = await fetch(url);
     if (!response.ok) throw new Error('Weather fetch error');
@@ -406,54 +408,61 @@ async function fetchWeather(lat, lon) {
     const wx = data.current_weather || {};
     const now = new Date();
 
+    const uvTimes = data.hourly.time || [];
+    const uvIndexArray = data.hourly.uv_index || [];
+
     const findClosestIndex = (times) => {
-      if (!times) return -1;
       let minDiff = Infinity;
       let closestIdx = 0;
       times.forEach((t, i) => {
-        const d = Math.abs(new Date(t).getTime() - now.getTime());
-        if (d < minDiff) {
-          minDiff = d;
+        const diff = Math.abs(new Date(t).getTime() - now.getTime());
+        if (diff < minDiff) {
+          minDiff = diff;
           closestIdx = i;
         }
       });
       return closestIdx;
     };
 
-    const uvIndexArray = data.hourly?.uv_index || [];
-    const sunriseArray = data.hourly?.sunrise || [];
-    const sunsetArray = data.hourly?.sunset || [];
-    const timeArray = data.hourly?.time || [];
-
-    const idx = findClosestIndex(timeArray);
+    const uvIdx = findClosestIndex(uvTimes);
 
     return {
       temperature: wx.temperature,
       windspeed: wx.windspeed,
       winddirection: wx.winddirection,
       pressure: wx.pressure ?? 'N/A',
-      uv: uvIndexArray[idx] ?? 'N/A',
-      sunrise: sunriseArray[idx]?.slice(11,16) ?? 'N/A',
-      sunset: sunsetArray[idx]?.slice(11,16) ?? 'N/A',
-      weathercode: wx.weathercode
+      uv: uvIndexArray[uvIdx] ?? 'N/A'
     };
   } catch (e) {
     return null;
   }
 }
 
-const getOfficialCapitalTime = (isoCode) => {
+function getOfficialCapitalTime(isoCode) {
   const tz = capitalTimeZones[isoCode];
   if (!tz) return '';
   const now = new Date();
   return new Intl.DateTimeFormat('en-GB', {
     hour: '2-digit', minute: '2-digit', timeZone: tz
   }).format(now);
-};
+}
 
-// Updated createFlagLabelIcon with weather info line below basic info
-const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode = '', plugType = '', showInfo = false, lon = 0, weather = null, showWeather = false) => {
-  const fixedWidth = 90; // fixed icon width, prevent shifting
+function getSunTimes(lat, lon, date = new Date()) {
+  const times = SunCalc.getTimes(date, lat, lon);
+  const formatTime = (d) => d ? d.toTimeString().slice(0,5) : 'N/A';
+  return {
+    sunrise: formatTime(times.sunrise),
+    sunset: formatTime(times.sunset)
+  };
+}
+
+const createFlagLabelIcon = (
+  flagUrl, isoCode = '', areaCode = '', currencyCode = '', plugType = '',
+  showInfo = false, lon = 0,
+  weather = null, showWeather = false,
+  sunrise = 'N/A', sunset = 'N/A'
+) => {
+  const fixedWidth = 90;
   const infoHtml = showInfo ? `<div style="font-weight:bold; color:navy; font-family: Arial, sans-serif; font-size:11px; margin: 2px 0 0 0; white-space: nowrap;">
     ${isoCode}: ${areaCode}|${currencyCode}|${plugType}|${getOfficialCapitalTime(isoCode)}
   </div>` : '';
@@ -462,7 +471,7 @@ const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode 
     <div style="font-family: Arial, sans-serif; font-size: 10px; color: darkslategray; margin-top: 4px; white-space: nowrap;">
       Temp: ${weather.temperature}°C, Wind: ${weather.windspeed} km/h<br>
       Pressure: ${weather.pressure}, UV: ${weather.uv}<br>
-      Sunrise: ${weather.sunrise}, Sunset: ${weather.sunset}
+      Sunrise: ${sunrise}, Sunset: ${sunset}
     </div>
   ` : '';
 
@@ -474,8 +483,8 @@ const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode 
 
   return L.divIcon({
     html: html,
-    className: '', 
-    iconSize: [fixedWidth, showWeather ? 65 : (showInfo ? 36 : 20)],
+    className: '',
+    iconSize: [fixedWidth, showWeather ? 80 : (showInfo ? 36 : 20)],
     iconAnchor: [fixedWidth / 2, 16]
   });
 };
@@ -485,9 +494,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: "© OpenStreetMap contributors"
 }).addTo(map);
 
-map.on('click', (e) => {
-  const zoom = map.getZoom();
-  map.setZoom(zoom + 1);
+map.on('click', () => {
+  map.setZoom(map.getZoom() + 1);
 });
 
 const markers = [];
@@ -519,8 +527,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const showWeather = weatherInfoToggle.checked;
 
-    markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon }) => {
-      marker.setIcon(createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, showInfo, lon, weatherData.get(isoCode), showWeather));
+    markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon, lat }) => {
+      const sunTimes = getSunTimes(lat, lon);
+      marker.setIcon(createFlagLabelIcon(
+        flag, isoCode, areaCode, currencyCode, plugType,
+        showInfo, lon, weatherData.get(isoCode), showWeather,
+        sunTimes.sunrise, sunTimes.sunset
+      ));
     });
   });
 
@@ -538,8 +551,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const basicInfoChecked = basicInfoToggle.checked;
 
-    markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon }) => {
-      marker.setIcon(createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, basicInfoChecked, lon, weatherData.get(isoCode), showWeather));
+    markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon, lat }) => {
+      const sunTimes = getSunTimes(lat, lon);
+      marker.setIcon(createFlagLabelIcon(
+        flag, isoCode, areaCode, currencyCode, plugType,
+        basicInfoChecked, lon, weatherData.get(isoCode), showWeather,
+        sunTimes.sunrise, sunTimes.sunset
+      ));
     });
   });
 });
