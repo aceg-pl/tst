@@ -440,12 +440,21 @@ function getOfficialCapitalTime(isoCode) {
   }).format(now);
 }
 
-function getSunTimes(lat, lon, date = new Date()) {
+function getSunTimes(lat, lon, isoCode, date = new Date()) {
   const times = SunCalc.getTimes(date, lat, lon);
-  const formatTime = (d) => d ? d.toTimeString().slice(0,5) : 'N/A';
+
+  const formatTimeInZone = (dateObj, timeZone) => {
+    if (!dateObj) return 'N/A';
+    return new Intl.DateTimeFormat('en-GB', {
+      hour: '2-digit', minute: '2-digit', timeZone
+    }).format(dateObj);
+  };
+
+  const tz = capitalTimeZones[isoCode] || Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   return {
-    sunrise: formatTime(times.sunrise),
-    sunset: formatTime(times.sunset)
+    sunrise: formatTimeInZone(times.sunrise, tz),
+    sunset: formatTimeInZone(times.sunset, tz)
   };
 }
 
@@ -521,12 +530,12 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon, lat }) => {
-      const sunTimes = getSunTimes(lat, lon);
-      marker.setIcon(createFlagLabelIcon(
-        flag, isoCode, areaCode, currencyCode, plugType,
-        show, lon, weatherData.get(isoCode), show,
-        sunTimes.sunrise, sunTimes.sunset
-      ));
+  const sunTimes = getSunTimes(lat, lon, isoCode);
+  marker.setIcon(createFlagLabelIcon(
+    flag, isoCode, areaCode, currencyCode, plugType,
+    show, lon, weatherData.get(isoCode), show,
+    sunTimes.sunrise, sunTimes.sunset
+     ));
     });
   });
 });
