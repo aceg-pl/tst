@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -8,7 +7,7 @@
 <meta http-equiv='cache-control' content='no-cache'> 
 <meta http-equiv='expires' content='0'> 
 <meta http-equiv='pragma' content='no-cache'>
-  
+
 <title>Travel Map</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <style>
@@ -18,56 +17,65 @@
     text-align:center;
     position:relative;
   }
-  #basicInfoToggleLabel {
-    text-align:center;
-    position:relative;
-    font-weight: normal;
-    cursor: pointer;
-    font-size: 14px;
+  #basicInfoToggleLabel, #weatherInfoToggleLabel {
+    text-align:center; 
+    position:relative; 
+    font-weight: normal; 
+    cursor: pointer; 
+    font-size: 14px; 
+    margin-left: 15px; 
+    display: inline-block;
   }
-  #basicInfoToggle {
-    margin-left: 6px;
+  #basicInfoToggle, #weatherInfoToggle {
+    margin-left: 6px; 
     vertical-align: middle;
+  }
+  #plugTypesSection {
+    display:none; 
+    text-align:center; 
+    margin-top:20px; 
+    font-family: Arial, sans-serif; 
+    max-width: 480px; 
+    margin-left: auto; 
+    margin-right: auto;
   }
 </style>
 </head>
 <body>
 <h3 style="position:relative; text-align:center;">
   Travel Risk & Info Map
+  <div style="display:inline-block; text-align:center; margin-left:10px;">
+    <label id="basicInfoToggleLabel" style="cursor:pointer; font-weight:normal; font-size:12px;">
+      Additional info: ☎️ Area Code 💲Currency 🔌 Plug Type 🕥 Time (Capital)
+      <input type="checkbox" id="basicInfoToggle" style="margin-left:6px; vertical-align:middle;">
+    </label>
+    <label id="weatherInfoToggleLabel" style="text-align:center; position:relative; font-weight: normal; cursor: pointer; font-size: 14px; margin-left: 15px; display: inline-block;">
+      Weather Info ☀️
+      <input type="checkbox" id="weatherInfoToggle" style="margin-left:6px; vertical-align: middle;">
+    </label>
+  </div>
 </h3>
+
 <div id="leafletmap"></div>
+
+<div id="plugTypesSection" style="text-align:center; margin-top:20px; font-family: Arial, sans-serif; max-width: 480px; margin-left: auto; margin-right: auto;">
+  <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">Plug Types:</div>
+  <div style="display: flex; justify-content: center; gap: 1px;">
+    <img src="https://raw.githubusercontent.com/aceg-pl/rsk/main/plug_ABCD.jpeg" alt="Plug ABCD" style="width: 70%; border: 1px solid #ccc; border-radius: 4px;" />
+    <img src="https://raw.githubusercontent.com/aceg-pl/rsk/main/plug_EFGH.jpeg" alt="Plug EFGH" style="width: 70%; border: 1px solid #ccc; border-radius: 4px;" />
+  </div>
+  <div style="display: flex; justify-content: center; gap: 1px;">
+    <img src="https://raw.githubusercontent.com/aceg-pl/rsk/main/plug_IJKL.jpeg" alt="Plug IJKL" style="width: 70%; border: 1px solid #ccc; border-radius: 4px;" />
+    <img src="https://raw.githubusercontent.com/aceg-pl/rsk/main/plug_MNOA.jpeg" alt="Plug MNOA" style="width: 70%; border: 1px solid #ccc; border-radius: 4px;" />
+  </div>
+</div>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-// Create a marker icon showing flag plus optional info below it
-const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode = '', plugType = '', showInfo = false, lon = 0) => {
-  const fixedWidth = 90; // fixed icon width, prevent shifting
-  const infoHtml = showInfo ? `<div style="font-weight:bold; color:navy; font-family: Arial, sans-serif; font-size:11px; margin: 2px 0 0 0; white-space: nowrap;">
-    ${isoCode}: ${areaCode}|${currencyCode}|${plugType}|${getOfficialCapitalTime(isoCode)}
-  </div>` : '';
-  
-  const html = `<div style="text-align:center; display: inline-block; width: ${fixedWidth}px;">
-    <img src="${flagUrl}" style="width:22px; height:16px; border:1px solid #444; border-radius:2px; display:block; margin: 0 auto;"/>
-    ${infoHtml}
-  </div>`;
 
-  return L.divIcon({
-    html: html,
-    className: '', 
-    iconSize: [fixedWidth, showInfo ? 36 : 20], // fixed width helps centering
-    iconAnchor: [fixedWidth / 2, 16]             // anchor horizontally centered
-  });
-};
+// Your countries array.
 
-  const getOfficialCapitalTime = (isoCode) => {
-  const tz = capitalTimeZones[isoCode];
-  if (!tz) return '';
-  const now = new Date();
-  return new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit', minute: '2-digit', timeZone: tz
-  }).format(now);
-};
-  
-  const countries = [
+const countries = [
   ["Algeria","https://www.smartraveller.gov.au/destinations/africa/algeria","https://flagcdn.com/w20/dz.png",28.0,1.66,"DZ","+213","DZD","CF"],
   ["Libya","https://www.smartraveller.gov.au/destinations/africa/libya","https://flagcdn.com/w20/ly.png",26.34,17.23,"LY","+218","LYD","CF"],
   ["Tunisia","https://www.smartraveller.gov.au/destinations/africa/tunisia","https://flagcdn.com/w20/tn.png",33.8869,9.5375,"TN","+216","TND","CE"],
@@ -386,7 +394,92 @@ const capitalTimeZones = {
   // Extend as needed
 };
 
-  
+// Weather data cache
+const weatherData = new Map();
+
+async function fetchWeather(lat, lon) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=uv_index,sunrise,sunset&timezone=auto`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Weather fetch error');
+    const data = await response.json();
+    const wx = data.current_weather || {};
+    const now = new Date();
+
+    const findClosestIndex = (times) => {
+      if (!times) return -1;
+      let minDiff = Infinity;
+      let closestIdx = 0;
+      times.forEach((t, i) => {
+        const d = Math.abs(new Date(t).getTime() - now.getTime());
+        if (d < minDiff) {
+          minDiff = d;
+          closestIdx = i;
+        }
+      });
+      return closestIdx;
+    };
+
+    const uvIndexArray = data.hourly?.uv_index || [];
+    const sunriseArray = data.hourly?.sunrise || [];
+    const sunsetArray = data.hourly?.sunset || [];
+    const timeArray = data.hourly?.time || [];
+
+    const idx = findClosestIndex(timeArray);
+
+    return {
+      temperature: wx.temperature,
+      windspeed: wx.windspeed,
+      winddirection: wx.winddirection,
+      pressure: wx.pressure ?? 'N/A',
+      uv: uvIndexArray[idx] ?? 'N/A',
+      sunrise: sunriseArray[idx]?.slice(11,16) ?? 'N/A',
+      sunset: sunsetArray[idx]?.slice(11,16) ?? 'N/A',
+      weathercode: wx.weathercode
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+const getOfficialCapitalTime = (isoCode) => {
+  const tz = capitalTimeZones[isoCode];
+  if (!tz) return '';
+  const now = new Date();
+  return new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit', minute: '2-digit', timeZone: tz
+  }).format(now);
+};
+
+// Updated createFlagLabelIcon with weather info line below basic info
+const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode = '', plugType = '', showInfo = false, lon = 0, weather = null, showWeather = false) => {
+  const fixedWidth = 90; // fixed icon width, prevent shifting
+  const infoHtml = showInfo ? `<div style="font-weight:bold; color:navy; font-family: Arial, sans-serif; font-size:11px; margin: 2px 0 0 0; white-space: nowrap;">
+    ${isoCode}: ${areaCode}|${currencyCode}|${plugType}|${getOfficialCapitalTime(isoCode)}
+  </div>` : '';
+
+  const weatherHtml = (showWeather && weather) ? `
+    <div style="font-family: Arial, sans-serif; font-size: 10px; color: darkslategray; margin-top: 4px; white-space: nowrap;">
+      Temp: ${weather.temperature}°C, Wind: ${weather.windspeed} km/h<br>
+      Pressure: ${weather.pressure}, UV: ${weather.uv}<br>
+      Sunrise: ${weather.sunrise}, Sunset: ${weather.sunset}
+    </div>
+  ` : '';
+
+  const html = `<div style="text-align:center; display: inline-block; width: ${fixedWidth}px;">
+    <img src="${flagUrl}" style="width:22px; height:16px; border:1px solid #444; border-radius:2px; display:block; margin: 0 auto;"/>
+    ${infoHtml}
+    ${weatherHtml}
+  </div>`;
+
+  return L.divIcon({
+    html: html,
+    className: '', 
+    iconSize: [fixedWidth, showWeather ? 65 : (showInfo ? 36 : 20)],
+    iconAnchor: [fixedWidth / 2, 16]
+  });
+};
+
 const map = L.map('leafletmap').setView([10, 20], 2);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: "© OpenStreetMap contributors"
@@ -402,62 +495,54 @@ countries.forEach(([name, url, flag, lat, lon, isoCode, areaCode, currencyCode, 
   const marker = L.marker([lat, lon], {
     icon: createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, false, lon)
   }).addTo(map);
- marker.on('click', (e) => {
-  e.originalEvent.preventDefault();   // Optional but can prevent default behavior
-  window.open(url, '_blank', 'noopener,noreferrer');
-});
-  markers.push({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon });
+  marker.on('click', (e) => {
+    e.originalEvent.preventDefault();
+    window.open(url, '_blank', 'noopener,noreferrer');
+  });
+  markers.push({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon, lat });
 });
 
 window.addEventListener('DOMContentLoaded', () => {
   const basicInfoToggle = document.getElementById('basicInfoToggle');
+  const weatherInfoToggle = document.getElementById('weatherInfoToggle');
+
   basicInfoToggle.addEventListener('change', e => {
     const showInfo = e.target.checked;
     const plugSection = document.getElementById('plugTypesSection');
     plugSection.style.display = showInfo ? 'block' : 'none';
 
     if (showInfo) {
-      map.setView([52.0, 20.0], 5); // Zoom and center to Poland
+      map.setView([52.0, 20.0], 5);
     } else {
-      map.setView([10, 20], 2); // Zoom out to default location
+      map.setView([10, 20], 2);
     }
 
+    const showWeather = weatherInfoToggle.checked;
+
     markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon }) => {
-      marker.setIcon(createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, showInfo, lon));
+      marker.setIcon(createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, showInfo, lon, weatherData.get(isoCode), showWeather));
+    });
+  });
+
+  weatherInfoToggle.addEventListener('change', async e => {
+    const showWeather = e.target.checked;
+
+    if (showWeather) {
+      await Promise.all(markers.map(async m => {
+        if (!weatherData.has(m.isoCode)) {
+          const wx = await fetchWeather(m.lat, m.lon);
+          weatherData.set(m.isoCode, wx);
+        }
+      }));
+    }
+
+    const basicInfoChecked = basicInfoToggle.checked;
+
+    markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon }) => {
+      marker.setIcon(createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, basicInfoChecked, lon, weatherData.get(isoCode), showWeather));
     });
   });
 });
-
 </script>
-<div id="region-links" style="text-align:center; margin:8px 0; font-family: Arial, sans-serif;">
-  <span style="font-weight:bold; margin-right: 10px;">Regional Risk Maps:</span>
-  <a href="https://www.smartraveller.gov.au/destinations/Europe" target="_blank" style="margin: 0 8px;">Europe</a>
-  <a href="https://www.smartraveller.gov.au/destinations/Americas" target="_blank" style="margin: 0 8px;">Americas</a>
-  <a href="https://www.smartraveller.gov.au/destinations/Asia" target="_blank" style="margin: 0 8px;">Asia</a>
-  <a href="https://www.smartraveller.gov.au/destinations/Africa" target="_blank" style="margin: 0 8px;">Africa</a>
-  <a href="https://www.smartraveller.gov.au/destinations/Middle%20East" target="_blank" style="margin: 0 8px;">Middle East</a>
-  <a href="https://www.smartraveller.gov.au/destinations/Pacific" target="_blank" style="margin: 0 8px;">Pacific</a>
-</div>
-
-<h3 style="position:relative; text-align:center;">
-  <div style="display: inline-block; text-align: center;">
-    <label id="basicInfoToggleLabel" style="cursor:pointer; font-weight:normal; font-size:12px;">
-    <input type="checkbox" id="basicInfoToggle" style="margin-left:6px; vertical-align:middle;">Additional info: ☎️ Area Code 💲Currency 🔌 Plug Type 🕥 Time (Capital)
-    </label>
-  </div>
-</h3>
-  
-<div id="plugTypesSection" style="display:none; text-align:center; margin-top:20px; font-family: Arial, sans-serif; max-width: 480px; margin-left: auto; margin-right: auto;">
-  <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">Plug Types:</div>
-  <div style="display: flex; justify-content: center; gap: 1px;">
-  <img src="https://raw.githubusercontent.com/aceg-pl/rsk/main/plug_ABCD.jpeg" alt="Plug ABCD" style="width: 70%; border: 1px solid #ccc; border-radius: 4px;" />
-  <img src="https://raw.githubusercontent.com/aceg-pl/rsk/main/plug_EFGH.jpeg" alt="Plug EFGH" style="width: 70%; border: 1px solid #ccc; border-radius: 4px;" />
-</div>
-<div style="display: flex; justify-content: center; gap: 1px;">
-  <img src="https://raw.githubusercontent.com/aceg-pl/rsk/main/plug_IJKL.jpeg" alt="Plug IJKL" style="width: 70%; border: 1px solid #ccc; border-radius: 4px;" />
-  <img src="https://raw.githubusercontent.com/aceg-pl/rsk/main/plug_MNOA.jpeg" alt="Plug MNOA" style="width: 70%; border: 1px solid #ccc; border-radius: 4px;" />
-</div>
-</div>
-
 </body>
 </html>
