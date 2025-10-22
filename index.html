@@ -30,11 +30,6 @@
 <body>
 <h3 style="position:relative; text-align:center;">
   Travel Risk & Info Map
-  <div style="display: inline-block; text-align: center; margin-left: 10px;">
-    <label id="basicInfoToggleLabel" style="cursor:pointer; font-weight:normal; font-size:12px;">
-      ☎️💲🔌🕥<input type="checkbox" id="basicInfoToggle" style="margin-left:6px; vertical-align:middle;">
-    </label>
-  </div>
 </h3>
 <div id="leafletmap"></div>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -433,6 +428,16 @@ document.getElementById('basicInfoToggle').addEventListener('change', e => {
   <a href="https://www.smartraveller.gov.au/destinations/Middle%20East" target="_blank" style="margin: 0 8px;">Middle East</a>
   <a href="https://www.smartraveller.gov.au/destinations/Pacific" target="_blank" style="margin: 0 8px;">Pacific</a>
 </div>
+
+<h3 style="position:relative; text-align:center;">
+  Travel Risk & Info Map
+  <div style="display: inline-block; text-align: center;">
+    <label id="basicInfoToggleLabel" style="cursor:pointer; font-weight:normal; font-size:12px;">
+    <input type="checkbox" id="basicInfoToggle" style="margin-left:6px; vertical-align:middle;">Additional info: ☎️ Area Code 💲Currency 🔌 Plug Type 🕥 Time (Capital)
+    </label>
+  </div>
+</h3>
+  
 <div id="plugTypesSection" style="display:none; text-align:center; margin-top:20px; font-family: Arial, sans-serif; max-width: 480px; margin-left: auto; margin-right: auto;">
   <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">Plug Types:</div>
   <div style="display: flex; justify-content: center; gap: 1px;">
@@ -444,5 +449,6 @@ document.getElementById('basicInfoToggle').addEventListener('change', e => {
   <img src="https://raw.githubusercontent.com/aceg-pl/rsk/main/plug_MNOA.jpeg" alt="Plug MNOA" style="width: 70%; border: 1px solid #ccc; border-radius: 4px;" />
 </div>
 </div>
+
 </body>
 </html>
