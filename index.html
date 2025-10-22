@@ -40,12 +40,12 @@
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
 // Create a marker icon showing flag plus optional info below it
-const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode = '', plugType = '', showInfo = false) => {
+const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode = '', plugType = '', showInfo = false, lon = 0) => {
   const fixedWidth = 90; // fixed icon width, prevent shifting
   const infoHtml = showInfo ? `<div style="font-weight:bold; color:navy; font-family: Arial, sans-serif; font-size:11px; margin: 2px 0 0 0; white-space: nowrap;">
-    ${isoCode}: ${areaCode}|${currencyCode}|${plugType}
+    ${isoCode}: ${areaCode}|${currencyCode}|${plugType}|${getLocalTimeFromCET(lon)}
   </div>` : '';
-
+  
   const html = `<div style="text-align:center; display: inline-block; width: ${fixedWidth}px;">
     <img src="${flagUrl}" style="width:22px; height:16px; border:1px solid #444; border-radius:2px; display:block; margin: 0 auto;"/>
     ${infoHtml}
@@ -59,6 +59,15 @@ const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode 
   });
 };
 
+  const getLocalTimeFromCET = (lon) => {
+  const now = new Date();
+  const cetOffset = 1 * 60; // CET = UTC+1
+  const utcTime = now.getTime() - cetOffset * 60 * 1000;
+  const localOffset = (lon / 15) * 60; // 15° = 1h timezone shift
+  const localTime = new Date(utcTime + localOffset * 60 * 1000);
+  return localTime.toUTCString().split(' ')[4].slice(0,5); // HH:MM
+};
+  
   const countries = [
   ["Algeria","https://www.smartraveller.gov.au/destinations/africa/algeria","https://flagcdn.com/w20/dz.png",28.0,1.66,"DZ","+213","DZD","CF"],
   ["Libya","https://www.smartraveller.gov.au/destinations/africa/libya","https://flagcdn.com/w20/ly.png",26.34,17.23,"LY","+218","LYD","CF"],
@@ -234,7 +243,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const markers = [];
 countries.forEach(([name, url, flag, lat, lon, isoCode, areaCode, currencyCode, plugType]) => {
   const marker = L.marker([lat, lon], {
-    icon: createFlagLabelIcon(flag)
+    icon: createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, false, lon)
   }).addTo(map);
   marker.on('click', () => window.open(url, '_blank'));
   markers.push({ marker, flag, isoCode, areaCode, currencyCode, plugType });
@@ -243,7 +252,7 @@ countries.forEach(([name, url, flag, lat, lon, isoCode, areaCode, currencyCode, 
 document.getElementById('basicInfoToggle').addEventListener('change', e => {
   const showInfo = e.target.checked;
   markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType }) => {
-    marker.setIcon(createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, showInfo));
+    marker.setIcon(createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, showInfo, lon));
   });
 });
 </script>
