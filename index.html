@@ -480,7 +480,7 @@ const createFlagLabelIcon = (
   const combinedHtml = showInfo ? `
    <div style="font-weight:bold; color:blue; font-family: Arial, sans-serif; font-size:11px; white-space: nowrap;">
       ${isoCode}: ${areaCode} | ${currencyCode} | ${plugType} | ${getOfficialCapitalTime(isoCode)}
-      ${showWeather && weather ? `<br>${weather.temperature}°C|${weather.windspeed} kmh|☀️${sunrise}|🌙${sunset}` : ''}
+      ${showWeather && weather ? `<br>${weather.temperature}°C|${weather.windspeed} kmh|☀️${sunrise}-${sunset}` : ''}
     </div>
   ` : '';
 
@@ -527,7 +527,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('plugTypesSection').style.display = show ? 'block' : 'none';
 
     if (show) {
-      map.setView([52.0, 20.0], 5);
+      map.setView([52.0, 20.0], 6);
     } else {
       map.setView([10, 20], 2);
     }
