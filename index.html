@@ -468,7 +468,7 @@ const createFlagLabelIcon = (
   const combinedHtml = showInfo ? `
    <div style="font-weight:bold; color:navy; font-family: Arial, sans-serif; font-size:11px; white-space: nowrap;">
       ${isoCode}: ${areaCode} | ${currencyCode} | ${plugType} | ${getOfficialCapitalTime(isoCode)}
-      ${showWeather && weather ? `<br>${weather.temperature}°C|${weather.windspeed} kmh|UV ${weather.uv}<br>☀️ ${sunrise}|🌙 ${sunset}` : ''}
+      ${showWeather && weather ? `<br>${weather.temperature}°C|${weather.windspeed} kmh|☀️${sunrise}|🌙${sunset}` : ''}
     </div>
   ` : '';
 
