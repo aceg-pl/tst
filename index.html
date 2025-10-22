@@ -412,9 +412,11 @@ document.getElementById('basicInfoToggle').addEventListener('change', e => {
   const plugSection = document.getElementById('plugTypesSection');
   plugSection.style.display = showInfo ? 'block' : 'none';
 
-  const currentZoom = map.getZoom();
-  map.setZoom(showInfo ? currentZoom + 3 : currentZoom - 3);
-  map.setView([52.0, 20.0], 6);
+  if (showInfo) {
+  map.setView([52.0, 20.0], 6); // Zoom and center to Poland
+} else {
+  map.setView([10, 20], 2); // Zoom out to central default location
+}
 
   markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon }) => {
     marker.setIcon(createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, showInfo, lon));
