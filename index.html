@@ -399,7 +399,10 @@ countries.forEach(([name, url, flag, lat, lon, isoCode, areaCode, currencyCode, 
   const marker = L.marker([lat, lon], {
     icon: createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, false, lon)
   }).addTo(map);
-  marker.on('click', () => window.open(url, '_blank'));
+ marker.on('click', (e) => {
+  e.originalEvent.preventDefault();   // Optional but can prevent default behavior
+  window.open(url, '_blank', 'noopener,noreferrer');
+});
   markers.push({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon });
 });
 
