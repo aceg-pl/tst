@@ -43,7 +43,7 @@
 const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode = '', plugType = '', showInfo = false, lon = 0) => {
   const fixedWidth = 90; // fixed icon width, prevent shifting
   const infoHtml = showInfo ? `<div style="font-weight:bold; color:navy; font-family: Arial, sans-serif; font-size:11px; margin: 2px 0 0 0; white-space: nowrap;">
-    ${isoCode}: ${areaCode}|${currencyCode}|${plugType}|${getLocalTimeFromCET(lon)}
+    ${isoCode}: ${areaCode}|${currencyCode}|${plugType}|${getOfficialCapitalTime(isoCode)}
   </div>` : '';
   
   const html = `<div style="text-align:center; display: inline-block; width: ${fixedWidth}px;">
@@ -59,13 +59,13 @@ const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode 
   });
 };
 
-  const getLocalTimeFromCET = (lon) => {
+  const getOfficialCapitalTime = (isoCode) => {
+  const tz = capitalTimeZones[isoCode];
+  if (!tz) return '';
   const now = new Date();
-  const cetOffset = 1 * 60; // CET = UTC+1
-  const utcTime = now.getTime() - cetOffset * 60 * 1000;
-  const localOffset = (lon / 15) * 60; // 15° = 1h timezone shift
-  const localTime = new Date(utcTime + localOffset * 60 * 1000);
-  return localTime.toUTCString().split(' ')[4].slice(0,5); // HH:MM
+  return new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit', minute: '2-digit', timeZone: tz
+  }).format(now);
 };
   
   const countries = [
@@ -235,7 +235,160 @@ const createFlagLabelIcon = (flagUrl, isoCode = '', areaCode = '', currencyCode 
   ["Vanuatu","https://www.smartraveller.gov.au/destinations/pacific/vanuatu","https://flagcdn.com/w20/vu.png",-16.0,167.0,"VU","+678","VUV","I"]
 ];
 
-const map = L.map('leafletmap').setView([10, 20], 2);
+const capitalTimeZones = {
+  "DZ": "Africa/Algiers",
+  "LY": "Africa/Tripoli",
+  "TN": "Africa/Tunis",
+  "EG": "Africa/Cairo",
+  "MA": "Africa/Casablanca",
+  "MR": "Africa/Nouakchott",
+  "SD": "Africa/Khartoum",
+  "AO": "Africa/Luanda",
+  "BJ": "Africa/Porto-Novo",
+  "BW": "Africa/Gaborone",
+  "BI": "Africa/Bujumbura",
+  "CM": "Africa/Douala",
+  "CI": "Africa/Abidjan",
+  "ER": "Africa/Asmara",
+  "ET": "Africa/Addis_Ababa",
+  "GA": "Africa/Libreville",
+  "GH": "Africa/Accra",
+  "GN": "Africa/Conakry",
+  "KE": "Africa/Nairobi",
+  "LR": "Africa/Monrovia",
+  "MG": "Indian/Antananarivo",
+  "MW": "Africa/Blantyre",
+  "MU": "Indian/Mauritius",
+  "MZ": "Africa/Maputo",
+  "NA": "Africa/Windhoek",
+  "NG": "Africa/Lagos",
+  "RW": "Africa/Kigali",
+  "SN": "Africa/Dakar",
+  "ZA": "Africa/Johannesburg",
+  "TZ": "Africa/Dar_es_Salaam",
+  "UG": "Africa/Kampala",
+  "ZM": "Africa/Lusaka",
+  "ZW": "Africa/Harare",
+  "AR": "America/Argentina/Buenos_Aires",
+  "BZ": "America/Belize",
+  "BO": "America/La_Paz",
+  "BR": "America/Sao_Paulo",
+  "CA": "America/Toronto",
+  "CL": "America/Santiago",
+  "CO": "America/Bogota",
+  "CR": "America/Costa_Rica",
+  "CU": "America/Havana",
+  "DO": "America/Santo_Domingo",
+  "EC": "America/Guayaquil",
+  "SV": "America/El_Salvador",
+  "GT": "America/Guatemala",
+  "GY": "America/Guyana",
+  "HN": "America/Tegucigalpa",
+  "JM": "America/Jamaica",
+  "MX": "America/Mexico_City",
+  "NI": "America/Managua",
+  "PA": "America/Panama",
+  "PY": "America/Asuncion",
+  "PE": "America/Lima",
+  "BS": "America/Nassau",
+  "TT": "America/Port_of_Spain",
+  "US": "America/New_York",
+  "UY": "America/Montevideo",
+  "VE": "America/Caracas",
+  "AF": "Asia/Kabul",
+  "AZ": "Asia/Baku",
+  "BD": "Asia/Dhaka",
+  "BN": "Asia/Brunei",
+  "KH": "Asia/Phnom_Penh",
+  "CN": "Asia/Shanghai",
+  "ID": "Asia/Jakarta",
+  "IN": "Asia/Kolkata",
+  "IR": "Asia/Tehran",
+  "IQ": "Asia/Baghdad",
+  "IL": "Asia/Jerusalem",
+  "JP": "Asia/Tokyo",
+  "JO": "Asia/Amman",
+  "KZ": "Asia/Almaty",
+  "LA": "Asia/Vientiane",
+  "LB": "Asia/Beirut",
+  "MY": "Asia/Kuala_Lumpur",
+  "MV": "Indian/Maldives",
+  "MN": "Asia/Ulaanbaatar",
+  "MM": "Asia/Yangon",
+  "NP": "Asia/Kathmandu",
+  "KP": "Asia/Pyongyang",
+  "PK": "Asia/Karachi",
+  "PH": "Asia/Manila",
+  "QA": "Asia/Qatar",
+  "KR": "Asia/Seoul",
+  "LK": "Asia/Colombo",
+  "SG": "Asia/Singapore",
+  "SY": "Asia/Damascus",
+  "TW": "Asia/Taipei",
+  "TJ": "Asia/Dushanbe",
+  "TH": "Asia/Bangkok",
+  "TL": "Asia/Dili",
+  "TM": "Asia/Ashgabat",
+  "UZ": "Asia/Tashkent",
+  "VN": "Asia/Ho_Chi_Minh",
+  "AL": "Europe/Tirane",
+  "AT": "Europe/Vienna",
+  "BY": "Europe/Minsk",
+  "BE": "Europe/Brussels",
+  "BA": "Europe/Sarajevo",
+  "BG": "Europe/Sofia",
+  "CY": "Asia/Nicosia",
+  "CZ": "Europe/Prague",
+  "HR": "Europe/Zagreb",
+  "EE": "Europe/Tallinn",
+  "FI": "Europe/Helsinki",
+  "FR": "Europe/Paris",
+  "DE": "Europe/Berlin",
+  "GR": "Europe/Athens",
+  "HU": "Europe/Budapest",
+  "IS": "Atlantic/Reykjavik",
+  "IE": "Europe/Dublin",
+  "IT": "Europe/Rome",
+  "LV": "Europe/Riga",
+  "LT": "Europe/Vilnius",
+  "LU": "Europe/Luxembourg",
+  "MT": "Europe/Malta",
+  "MD": "Europe/Chisinau",
+  "ME": "Europe/Podgorica",
+  "NL": "Europe/Amsterdam",
+  "MK": "Europe/Skopje",
+  "NO": "Europe/Oslo",
+  "PL": "Europe/Warsaw",
+  "PT": "Europe/Lisbon",
+  "RO": "Europe/Bucharest",
+  "RU": "Europe/Moscow",
+  "RS": "Europe/Belgrade",
+  "SK": "Europe/Bratislava",
+  "SI": "Europe/Ljubljana",
+  "ES": "Europe/Madrid",
+  "SE": "Europe/Stockholm",
+  "CH": "Europe/Zurich",
+  "TR": "Europe/Istanbul",
+  "UA": "Europe/Kiev",
+  "GB": "Europe/London",
+  "BH": "Asia/Bahrain",
+  "AE": "Asia/Dubai",
+  "YE": "Asia/Aden",
+  "AU": "Australia/Sydney",
+  "FJ": "Pacific/Fiji",
+  "GU": "Pacific/Guam",
+  "MH": "Pacific/Majuro",
+  "NZ": "Pacific/Auckland",
+  "PG": "Pacific/Port_Moresby",
+  "WS": "Pacific/Apia",
+  "SB": "Pacific/Guadalcanal",
+  "TO": "Pacific/Tongatapu",
+  "VU": "Pacific/Efate"
+  // Extend as needed
+};
+
+  
+const map = L.map('leafletmap').setView([52.0, 20.0], 6);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: "© OpenStreetMap contributors"
 }).addTo(map);
