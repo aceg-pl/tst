@@ -414,6 +414,7 @@ document.getElementById('basicInfoToggle').addEventListener('change', e => {
 
   const currentZoom = map.getZoom();
   map.setZoom(showInfo ? currentZoom + 3 : currentZoom - 3);
+  map.setView([52.0, 20.0], 6);
 
   markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon }) => {
     marker.setIcon(createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, showInfo, lon));
