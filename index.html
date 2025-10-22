@@ -403,10 +403,24 @@ countries.forEach(([name, url, flag, lat, lon, isoCode, areaCode, currencyCode, 
   markers.push({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon });
 });
 
-document.getElementById('basicInfoToggle').addEventListener('change', e => {
-  const showInfo = e.target.checked;
-  const plugSection = document.getElementById('plugTypesSection');
-  plugSection.style.display = showInfo ? 'block' : 'none';
+window.addEventListener('DOMContentLoaded', () => {
+  const basicInfoToggle = document.getElementById('basicInfoToggle');
+  basicInfoToggle.addEventListener('change', e => {
+    const showInfo = e.target.checked;
+    const plugSection = document.getElementById('plugTypesSection');
+    plugSection.style.display = showInfo ? 'block' : 'none';
+
+    if (showInfo) {
+      map.setView([52.0, 20.0], 6); // Zoom and center to Poland
+    } else {
+      map.setView([10, 20], 2); // Zoom out to default location
+    }
+
+    markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon }) => {
+      marker.setIcon(createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, showInfo, lon));
+    });
+  });
+});
 
   if (showInfo) {
   map.setView([52.0, 20.0], 6); // Zoom and center to Poland
