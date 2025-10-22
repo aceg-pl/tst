@@ -251,10 +251,17 @@ countries.forEach(([name, url, flag, lat, lon, isoCode, areaCode, currencyCode, 
 
 document.getElementById('basicInfoToggle').addEventListener('change', e => {
   const showInfo = e.target.checked;
-  markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType }) => {
+  const plugSection = document.getElementById('plugTypesSection');
+  plugSection.style.display = showInfo ? 'block' : 'none';
+
+  const currentZoom = map.getZoom();
+  map.setZoom(showInfo ? currentZoom + 3 : currentZoom - 3);
+
+  markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon }) => {
     marker.setIcon(createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, showInfo, lon));
   });
 });
+
 </script>
 <div id="region-links" style="text-align:center; margin:8px 0; font-family: Arial, sans-serif;">
   <span style="font-weight:bold; margin-right: 10px;">Regional Risk Maps:</span>
@@ -265,7 +272,7 @@ document.getElementById('basicInfoToggle').addEventListener('change', e => {
   <a href="https://www.smartraveller.gov.au/destinations/Middle%20East" target="_blank" style="margin: 0 8px;">Middle East</a>
   <a href="https://www.smartraveller.gov.au/destinations/Pacific" target="_blank" style="margin: 0 8px;">Pacific</a>
 </div>
-<div style="text-align:center; margin-top:20px; font-family: Arial, sans-serif; max-width: 480px; margin-left: auto; margin-right: auto;">
+<div id="plugTypesSection" style="display:none; text-align:center; margin-top:20px; font-family: Arial, sans-serif; max-width: 480px; margin-left: auto; margin-right: auto;">
   <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">Plug Types:</div>
   <div style="display: flex; justify-content: center; gap: 1px;">
   <img src="https://raw.githubusercontent.com/aceg-pl/rsk/main/plug_ABCD.jpeg" alt="Plug ABCD" style="width: 70%; border: 1px solid #ccc; border-radius: 4px;" />
