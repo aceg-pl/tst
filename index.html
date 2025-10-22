@@ -46,15 +46,27 @@
 <body>
 <h3 style="position:relative; text-align:center;">
   Travel Risk & Info Map
-  <div style="display:inline-block; text-align:center; margin-left:10px;">
-    <label id="basicInfoToggleLabel">
-      Basic Info & Weather: ☎️ Area Code 💲Currency 🔌 Plug Type 🕥 Time (Capital) ☀️ Weather
-      <input type="checkbox" id="basicInfoToggle">
-    </label>
-  </div>
 </h3>
 
 <div id="leafletmap"></div>
+
+<div id="region-links" style="text-align:center; margin:8px 0; font-family: Arial, sans-serif;">
+  <span style="font-weight:bold; margin-right: 10px;">Regional Risk Maps:</span>
+  <a href="https://www.smartraveller.gov.au/destinations/Europe" target="_blank" style="margin: 0 8px;">Europe</a>
+  <a href="https://www.smartraveller.gov.au/destinations/Americas" target="_blank" style="margin: 0 8px;">Americas</a>
+  <a href="https://www.smartraveller.gov.au/destinations/Asia" target="_blank" style="margin: 0 8px;">Asia</a>
+  <a href="https://www.smartraveller.gov.au/destinations/Africa" target="_blank" style="margin: 0 8px;">Africa</a>
+  <a href="https://www.smartraveller.gov.au/destinations/Middle%20East" target="_blank" style="margin: 0 8px;">Middle East</a>
+  <a href="https://www.smartraveller.gov.au/destinations/Pacific" target="_blank" style="margin: 0 8px;">Pacific</a>
+</div>
+
+<h3 style="position:relative; text-align:center;">
+  <div style="display: inline-block; text-align: center;">
+    <label id="basicInfoToggleLabel" style="cursor:pointer; font-weight:normal; font-size:12px;">
+    <input type="checkbox" id="basicInfoToggle" style="margin-left:6px; vertical-align:middle;">Additional Info & Weather: ☎️ Area Code 💲Currency 🔌 Plug Type 🕥 Time (Capital) ☀️ Weather
+    </label>
+  </div>
+</h3>
 
 <div id="plugTypesSection">
   <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">Plug Types:</div>
@@ -466,7 +478,7 @@ const createFlagLabelIcon = (
 ) => {
   const fixedWidth = 140; // wide to accommodate all info in one block
   const combinedHtml = showInfo ? `
-   <div style="font-weight:bold; color:navy; font-family: Arial, sans-serif; font-size:11px; white-space: nowrap;">
+   <div style="font-weight:bold; color:blue; font-family: Arial, sans-serif; font-size:11px; white-space: nowrap;">
       ${isoCode}: ${areaCode} | ${currencyCode} | ${plugType} | ${getOfficialCapitalTime(isoCode)}
       ${showWeather && weather ? `<br>${weather.temperature}°C|${weather.windspeed} kmh|☀️${sunrise}|🌙${sunset}` : ''}
     </div>
