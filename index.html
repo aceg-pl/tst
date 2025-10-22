@@ -468,8 +468,9 @@ const createFlagLabelIcon = (
   </div>` : '';
 
   const weatherHtml = (showWeather && weather) ? `
-    <div style="font-weight:bold; color:navy; font-family: Arial, sans-serif; font-size:11px; margin: 2px 0 0 0; white-space: nowrap;">
-      ${weather.temperature}°C|${weather.windspeed} kmh|${weather.pressure} hpa|UV ${weather.uv}|🌅 ${sunrise}|🌌 ${sunset}
+    <div style="font-weight:bold; color:navy; font-family: Arial, sans-serif; font-size:11px; margin: 0px 0 0 0; white-space: nowrap;">
+      ${weather.temperature}°C|${weather.windspeed} kmh|UV ${weather.uv}<br>
+      ☀️ ${sunrise}|🌙 ${sunset                                                                                       
     </div>
   ` : '';
 
