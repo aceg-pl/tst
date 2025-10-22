@@ -246,7 +246,7 @@ countries.forEach(([name, url, flag, lat, lon, isoCode, areaCode, currencyCode, 
     icon: createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, false, lon)
   }).addTo(map);
   marker.on('click', () => window.open(url, '_blank'));
-  markers.push({ marker, flag, isoCode, areaCode, currencyCode, plugType });
+  markers.push({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon });
 });
 
 document.getElementById('basicInfoToggle').addEventListener('change', e => {
