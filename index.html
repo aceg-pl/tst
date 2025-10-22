@@ -388,10 +388,15 @@ const capitalTimeZones = {
 };
 
   
-const map = L.map('leafletmap').setView([52.0, 20.0], 6);
+const map = L.map('leafletmap').setView([10, 20], 2);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: "© OpenStreetMap contributors"
 }).addTo(map);
+
+map.on('click', (e) => {
+  const zoom = map.getZoom();
+  map.setZoom(zoom + 1);
+});
 
 const markers = [];
 countries.forEach(([name, url, flag, lat, lon, isoCode, areaCode, currencyCode, plugType]) => {
