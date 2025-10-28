@@ -1,556 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-
-<meta http-equiv='cache-control' content='no-cache'> 
-<meta http-equiv='expires' content='0'> 
-<meta http-equiv='pragma' content='no-cache'>
-
-<title>Travel Map</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>News Portal</title>
 <style>
-  body { margin:0; background:#eaf2f8; font-family: Arial,sans-serif; }
-  #leafletmap { height:600px; width:100%; max-width:1600px; margin:auto; }
-  h3 {
-    text-align:center;
-    position:relative;
+  body{margin:0;padding:16px;font-family:-apple-system,system-ui,Arial;background:#f5f5f5;}
+  h1{margin-bottom:10px;}
+  .sites{margin-bottom:12px;text-align:center;}
+@media (max-width: 480px) {
+  .sites {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    justify-items: center;
+    gap: 6px 12px;
   }
-  #basicInfoToggleLabel {
-    cursor: pointer; 
-    font-weight: normal; 
-    font-size: 12px;
-    text-align: center;
-    display: inline-block;
-    position: relative;
-  }
-  #basicInfoToggle {
-    margin-left: 6px; 
-    vertical-align: middle;
-  }
-  #plugTypesSection {
-    display:none; 
-    text-align:center; 
-    margin-top:20px; 
-    font-family: Arial, sans-serif; 
-    max-width: 480px; 
-    margin-left: auto; 
-    margin-right: auto;
-  }
+}
+  .sites img{width:24px;height:24px;margin:0 6px;cursor:pointer;vertical-align:middle;}
+  .block-title{font-weight:600;font-size:14px;margin:8px 0 8px 0;}
+  .feed-list{display:grid;grid-gap:8px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
+  .feed-item{background:#fff;padding:6px;border-radius:6px;border:1px solid #ddd;overflow:hidden;font-size:13px;height:60px;}
+  .feed-item img{width:12px;height:12px;vertical-align:middle;margin-right:4px;}
+  .feed-item a{text-decoration:none;color:#007aff;}
+  .feed-item span{color:#666;margin-left:4px;font-size:12px;}
+  .scroll-pane {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  padding: 0 6px;
+     }
 </style>
-
-<script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.min.js"></script>
 </head>
 <body>
-<h3 style="position:relative; text-align:center;">
-  Travel Risk & Info Map
-</h3>
+<div class="sites" id="siteIcons"></div>
+<input type="search" id="titleSearch" placeholder="Search Titles..." 
+  style="width:180px; max-width:66%; padding:8px; margin:8px auto 12px auto; border-radius:6px; border:1px solid #ccc; font-size:14px; box-sizing:border-box; display:block;">
 
-<div id="leafletmap"></div>
+<div class="block-title">📰 Wiadomości</div>
+<div class="scroll-pane"><div class="feed-list" id="feedListX0">Loading feeds…</div></div>
+<div class="block-title">⚽️ Sport</div>
+<div class="scroll-pane"><div class="feed-list" id="feedListX1">Loading feeds…</div></div>
+<div class="block-title">🖥️ Tech</div>
+<div class="scroll-pane"><div class="feed-list" id="feedListX2">Loading feeds…</div></div>
+<div class="block-title">🌎 News</div>
+<div class="scroll-pane"><div class="feed-list" id="feedListX3">Loading feeds…</div></div>
 
-<div id="region-links" style="text-align:center; margin:8px 0; font-family: Arial, sans-serif;">
-  <span style="font-weight:bold; margin-right: 10px;">Regional Risk Maps:</span>
-  <a href="https://www.smartraveller.gov.au/destinations/Europe" target="_blank" style="margin: 0 8px;">Europe</a>
-  <a href="https://www.smartraveller.gov.au/destinations/Americas" target="_blank" style="margin: 0 8px;">Americas</a>
-  <a href="https://www.smartraveller.gov.au/destinations/Asia" target="_blank" style="margin: 0 8px;">Asia</a>
-  <a href="https://www.smartraveller.gov.au/destinations/Africa" target="_blank" style="margin: 0 8px;">Africa</a>
-  <a href="https://www.smartraveller.gov.au/destinations/Middle%20East" target="_blank" style="margin: 0 8px;">Middle East</a>
-  <a href="https://www.smartraveller.gov.au/destinations/Pacific" target="_blank" style="margin: 0 8px;">Pacific</a>
-</div>
-
-<h3 style="position:relative; text-align:center;">
-  <div style="display: inline-block; text-align: center;">
-    <label id="basicInfoToggleLabel" style="cursor:pointer; font-weight:normal; font-size:12px;">
-    <input type="checkbox" id="basicInfoToggle" style="margin-left:6px; vertical-align:middle;">Additional Info: ☎️ Area Code 💲Currency 🔌 Plug Type 🕥 Time (Capital) ☀️ Weather
-    </label>
-  </div>
-</h3>
-
-<div id="plugTypesSection">
-  <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">Plug Types:</div>
-  <div style="display: flex; justify-content: center; gap: 1px;">
-    <img src="https://raw.githubusercontent.com/aceg-pl/rsk/main/plug_ABCD.jpeg" alt="Plug ABCD" style="width: 70%; border: 1px solid #ccc; border-radius: 4px;" />
-    <img src="https://raw.githubusercontent.com/aceg-pl/rsk/main/plug_EFGH.jpeg" alt="Plug EFGH" style="width: 70%; border: 1px solid #ccc; border-radius: 4px;" />
-  </div>
-  <div style="display: flex; justify-content: center; gap: 1px;">
-    <img src="https://raw.githubusercontent.com/aceg-pl/rsk/main/plug_IJKL.jpeg" alt="Plug IJKL" style="width: 70%; border: 1px solid #ccc; border-radius: 4px;" />
-    <img src="https://raw.githubusercontent.com/aceg-pl/rsk/main/plug_MNOA.jpeg" alt="Plug MNOA" style="width: 70%; border: 1px solid #ccc; border-radius: 4px;" />
-  </div>
-</div>
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
 
-// Your countries array.
-const countries = [
-  ["Algeria","https://www.smartraveller.gov.au/destinations/africa/algeria","https://flagcdn.com/w20/dz.png",28.0,1.66,"DZ","+213","DZD","CF"],
-  ["Libya","https://www.smartraveller.gov.au/destinations/africa/libya","https://flagcdn.com/w20/ly.png",26.34,17.23,"LY","+218","LYD","CF"],
-  ["Tunisia","https://www.smartraveller.gov.au/destinations/africa/tunisia","https://flagcdn.com/w20/tn.png",33.8869,9.5375,"TN","+216","TND","CE"],
-  ["Egypt","https://www.smartraveller.gov.au/destinations/africa/egypt","https://flagcdn.com/w20/eg.png",26.82,30.8,"EG","+20","EGP","CE"],
-  ["Morocco","https://www.smartraveller.gov.au/destinations/africa/morocco","https://flagcdn.com/w20/ma.png",32.0,-5.0,"MA","+212","MAD","CE"],
-  ["Mauritania","https://www.smartraveller.gov.au/destinations/africa/mauritania","https://flagcdn.com/w20/mr.png",21.0,-10.94,"MR","+222","MRU","CE"],
-  ["Sudan","https://www.smartraveller.gov.au/destinations/africa/sudan","https://flagcdn.com/w20/sd.png",15.0,30.0,"SD","+249","SDG","CE"],
-  ["Western Sahara","https://www.smartraveller.gov.au/destinations/africa/western-sahara","https://flagcdn.com/w20/eh.png",24.2155,-12.8858,"EH","+212","MAD","CE"],
-  ["Angola","https://www.smartraveller.gov.au/destinations/africa/angola","https://flagcdn.com/w20/ao.png",-12.5,18.5,"AO","+244","AOA","CE"],
-  ["Benin","https://www.smartraveller.gov.au/destinations/africa/benin","https://flagcdn.com/w20/bj.png",9.5,2.25,"BJ","+229","XOF","CE"],
-  ["Botswana","https://www.smartraveller.gov.au/destinations/africa/botswana","https://flagcdn.com/w20/bw.png",-22.0,24.0,"BW","+267","BWP","DE"],
-  ["Burundi","https://www.smartraveller.gov.au/destinations/africa/burundi","https://flagcdn.com/w20/bi.png",-3.5,30.0,"BI","+257","BIF","CE"],
-  ["Cameroon","https://www.smartraveller.gov.au/destinations/africa/cameroon","https://flagcdn.com/w20/cm.png",6.0,12.0,"CM","+237","XAF","CE"],
-  ["Côte d'Ivoire","https://www.smartraveller.gov.au/destinations/africa/cote-divoire","https://flagcdn.com/w20/ci.png",8.0,-5.0,"CI","+225","XOF","CE"],
-  ["Eritrea","https://www.smartraveller.gov.au/destinations/africa/eritrea","https://flagcdn.com/w20/er.png",15.0,39.0,"ER","+291","ERN","CE"],
-  ["Ethiopia","https://www.smartraveller.gov.au/destinations/africa/ethiopia","https://flagcdn.com/w20/et.png",8.0,38.0,"ET","+251","ETB","DE"],
-  ["Gabon","https://www.smartraveller.gov.au/destinations/africa/gabon","https://flagcdn.com/w20/ga.png",-1.0,11.75,"GA","+241","XAF","CE"],
-  ["Ghana","https://www.smartraveller.gov.au/destinations/africa/ghana","https://flagcdn.com/w20/gh.png",8.0,-2.0,"GH","+233","GHS","DE"],
-  ["Guinea","https://www.smartraveller.gov.au/destinations/africa/guinea","https://flagcdn.com/w20/gn.png",11.0,-10.0,"GN","+224","GNF","CE"],
-  ["Kenya","https://www.smartraveller.gov.au/destinations/africa/kenya","https://flagcdn.com/w20/ke.png",1.0,38.0,"KE","+254","KES","G"],
-  ["Liberia","https://www.smartraveller.gov.au/destinations/africa/liberia","https://flagcdn.com/w20/lr.png",6.5,-9.5,"LR","+231","LRD","AB"],
-  ["Madagascar","https://www.smartraveller.gov.au/destinations/africa/madagascar","https://flagcdn.com/w20/mg.png",-20.0,47.0,"MG","+261","MGA","CE"],
-  ["Malawi","https://www.smartraveller.gov.au/destinations/africa/malawi","https://flagcdn.com/w20/mw.png",-13.5,34.0,"MW","+265","MWK","G"],
-  ["Mauritius","https://www.smartraveller.gov.au/destinations/africa/mauritius","https://flagcdn.com/w20/mu.png",-20.2833,57.55,"MU","+230","MUR","C"],
-  ["Mozambique","https://www.smartraveller.gov.au/destinations/africa/mozambique","https://flagcdn.com/w20/mz.png",-18.25,35.0,"MZ","+258","MZN","CE"],
-  ["Namibia","https://www.smartraveller.gov.au/destinations/africa/namibia","https://flagcdn.com/w20/na.png",-22.0,17.0,"NA","+264","NAD","DE"],
-  ["Nigeria","https://www.smartraveller.gov.au/destinations/africa/nigeria","https://flagcdn.com/w20/ng.png",10.0,8.0,"NG","+234","NGN","DE"],
-  ["Rwanda","https://www.smartraveller.gov.au/destinations/africa/rwanda","https://flagcdn.com/w20/rw.png",-2.0,30.0,"RW","+250","RWF","CE"],
-  ["Senegal","https://www.smartraveller.gov.au/destinations/africa/senegal","https://flagcdn.com/w20/sn.png",14.0,-14.0,"SN","+221","XOF","CE"],
-  ["South Africa","https://www.smartraveller.gov.au/destinations/africa/south-africa","https://flagcdn.com/w20/za.png",-29.0,24.0,"ZA","+27","ZAR","DE"],
-  ["Sierra Leone","https://www.smartraveller.gov.au/destinations/africa/sierra-leone","https://flagcdn.com/w20/sl.png",8.5,-11.5,"SL","+232","SLL","AB"],
-  ["Tanzania","https://www.smartraveller.gov.au/destinations/africa/tanzania","https://flagcdn.com/w20/tz.png",-6.0,35.0,"TZ","+255","TZS","G"],
-  ["Uganda","https://www.smartraveller.gov.au/destinations/africa/uganda","https://flagcdn.com/w20/ug.png",1.0,32.0,"UG","+256","UGX","G"],
-  ["Zambia","https://www.smartraveller.gov.au/destinations/africa/zambia","https://flagcdn.com/w20/zm.png",-15.0,30.0,"ZM","+260","ZMW","G"],
-  ["Zimbabwe","https://www.smartraveller.gov.au/destinations/africa/zimbabwe","https://flagcdn.com/w20/zw.png",-20.0,30.0,"ZW","+263","ZWL","G"],
-  ["Argentina","https://www.smartraveller.gov.au/destinations/americas/argentina","https://flagcdn.com/w20/ar.png",-34.0,-64.0,"AR","+54","ARS","C"],
-  ["Belize","https://www.smartraveller.gov.au/destinations/americas/belize","https://flagcdn.com/w20/bz.png",17.25,-88.75,"BZ","+501","BZD","A"],
-  ["Bolivia","https://www.smartraveller.gov.au/destinations/americas/bolivia","https://flagcdn.com/w20/bo.png",-17.0,-65.0,"BO","+591","BOB","A"],
-  ["Brazil","https://www.smartraveller.gov.au/destinations/americas/brazil","https://flagcdn.com/w20/br.png",-10.0,-55.0,"BR","+55","BRL","N"],
-  ["Canada","https://www.smartraveller.gov.au/destinations/americas/canada","https://flagcdn.com/w20/ca.png",60.0,-95.0,"CA","+1","CAD","AB"],
-  ["Chile","https://www.smartraveller.gov.au/destinations/americas/chile","https://flagcdn.com/w20/cl.png",-30.0,-71.0,"CL","+56","CLP","CL"],
-  ["Colombia","https://www.smartraveller.gov.au/destinations/americas/colombia","https://flagcdn.com/w20/co.png",4.0,-72.0,"CO","+57","COP","AB"],
-  ["Costa Rica","https://www.smartraveller.gov.au/destinations/americas/costa-rica","https://flagcdn.com/w20/cr.png",10.0,-84.0,"CR","+506","CRC","AB"],
-  ["Cuba","https://www.smartraveller.gov.au/destinations/americas/cuba","https://flagcdn.com/w20/cu.png",21.5,-80.0,"CU","+53","CUP","A"],
-  ["Dominican Republic","https://www.smartraveller.gov.au/destinations/americas/dominican-republic","https://flagcdn.com/w20/do.png",19.0,-70.6667,"DO","+1809","DOP","AB"],
-  ["Ecuador","https://www.smartraveller.gov.au/destinations/americas/ecuador","https://flagcdn.com/w20/ec.png",-2.0,-77.5,"EC","+593","USD","AB"],
-  ["El Salvador","https://www.smartraveller.gov.au/destinations/americas/el-salvador","https://flagcdn.com/w20/sv.png",13.8333,-88.9167,"SV","+503","USD","AB"],
-  ["Guatemala","https://www.smartraveller.gov.au/destinations/americas/guatemala","https://flagcdn.com/w20/gt.png",15.5,-90.25,"GT","+502","GTQ","AB"],
-  ["Guyana","https://www.smartraveller.gov.au/destinations/americas/guyana","https://flagcdn.com/w20/gy.png",4.8604,-58.9302,"GY","+592","GYD","AB"],
-  ["Honduras","https://www.smartraveller.gov.au/destinations/americas/honduras","https://flagcdn.com/w20/hn.png",15.0,-86.5,"HN","+504","HNL","AB"],
-  ["Jamaica","https://www.smartraveller.gov.au/destinations/americas/jamaica","https://flagcdn.com/w20/jm.png",18.25,-77.5,"JM","+1876","JMD","A"],
-  ["Mexico","https://www.smartraveller.gov.au/destinations/americas/mexico","https://flagcdn.com/w20/mx.png",23.0,-102.0,"MX","+52","MXN","AB"],
-  ["Nicaragua","https://www.smartraveller.gov.au/destinations/americas/nicaragua","https://flagcdn.com/w20/ni.png",13.0,-85.0,"NI","+505","NIO","AB"],
-  ["Panama","https://www.smartraveller.gov.au/destinations/americas/panama","https://flagcdn.com/w20/pa.png",9.0,-80.0,"PA","+507","PAB","AB"],
-  ["Paraguay","https://www.smartraveller.gov.au/destinations/americas/paraguay","https://flagcdn.com/w20/py.png",-23.0,-58.0,"PY","+595","PYG","C"],
-  ["Peru","https://www.smartraveller.gov.au/destinations/americas/peru","https://flagcdn.com/w20/pe.png",-10.0,-76.0,"PE","+51","PEN","AB"],
-  ["The Bahamas","https://www.smartraveller.gov.au/destinations/americas/bahamas","https://flagcdn.com/w20/bs.png",25.0343,-77.3963,"BS","+1242","BSD","AB"],
-  ["Trinidad and Tobago","https://www.smartraveller.gov.au/destinations/americas/trinidad-and-tobago","https://flagcdn.com/w20/tt.png",11.0,-61.0,"TT","+1868","TTD","AB"],
-  ["United States of America","https://www.smartraveller.gov.au/destinations/americas/united-states-america","https://flagcdn.com/w20/us.png",38.0,-97.0,"US","+1","USD","AB"],
-  ["Uruguay","https://www.smartraveller.gov.au/destinations/americas/uruguay","https://flagcdn.com/w20/uy.png",-33.0,-56.0,"UY","+598","UYU","C"],
-  ["Venezuela","https://www.smartraveller.gov.au/destinations/americas/venezuela","https://flagcdn.com/w20/ve.png",8.0,-66.0,"VE","+58","VES","AB"],
-  ["Afghanistan","https://www.smartraveller.gov.au/destinations/asia/afghanistan","https://flagcdn.com/w20/af.png",33.0,65.0,"AF","+93","AFN","C"],
-  ["Azerbaijan","https://www.smartraveller.gov.au/destinations/asia/azerbaijan","https://flagcdn.com/w20/az.png",40.5,47.5,"AZ","+994","AZN","CF"],
-  ["Bangladesh","https://www.smartraveller.gov.au/destinations/asia/bangladesh","https://flagcdn.com/w20/bd.png",24.0,90.0,"BD","+880","BDT","ABC"],
-  ["Brunei Darussalam","https://www.smartraveller.gov.au/destinations/asia/brunei-darussalam","https://flagcdn.com/w20/bn.png",4.5,114.6667,"BN","+673","BND","G"],
-  ["Cambodia","https://www.smartraveller.gov.au/destinations/asia/cambodia","https://flagcdn.com/w20/kh.png",13.0,105.0,"KH","+855","KHR","AC"],
-  ["China","https://www.smartraveller.gov.au/destinations/asia/china","https://flagcdn.com/w20/cn.png",35.0,105.0,"CN","+86","CNY","AI"],
-  ["Indonesia","https://www.smartraveller.gov.au/destinations/asia/indonesia","https://flagcdn.com/w20/id.png",-5.0,120.0,"ID","+62","IDR","C"],
-  ["India","https://www.smartraveller.gov.au/destinations/asia/india","https://flagcdn.com/w20/in.png",20.0,77.0,"IN","+91","INR","CDM"],
-  ["Iran","https://www.smartraveller.gov.au/destinations/asia/iran","https://flagcdn.com/w20/ir.png",32.0,53.0,"IR","+98","IRR","CF"],
-  ["Iraq","https://www.smartraveller.gov.au/destinations/asia/iraq","https://flagcdn.com/w20/iq.png",33.0,44.0,"IQ","+964","IQD","C"],
-  ["Israel","https://www.smartraveller.gov.au/destinations/asia/israel","https://flagcdn.com/w20/il.png",31.5,34.75,"IL","+972","ILS","H"],
-  ["Japan","https://www.smartraveller.gov.au/destinations/asia/japan","https://flagcdn.com/w20/jp.png",36.0,138.0,"JP","+81","JPY","AB"],
-  ["Jordan","https://www.smartraveller.gov.au/destinations/asia/jordan","https://flagcdn.com/w20/jo.png",31.0,36.0,"JO","+962","JOD","CD"],
-  ["Kazakhstan","https://www.smartraveller.gov.au/destinations/asia/kazakhstan","https://flagcdn.com/w20/kz.png",48.0,68.0,"KZ","+7","KZT","CF"],
-  ["Laos","https://www.smartraveller.gov.au/destinations/asia/laos","https://flagcdn.com/w20/la.png",18.0,105.0,"LA","+856","LAK","ABC"],
-  ["Lebanon","https://www.smartraveller.gov.au/destinations/asia/lebanon","https://flagcdn.com/w20/lb.png",33.8333,35.8333,"LB","+961","LBP","C"],
-  ["Malaysia","https://www.smartraveller.gov.au/destinations/asia/malaysia","https://flagcdn.com/w20/my.png",2.5,112.5,"MY","+60","MYR","G"],
-  ["Maldives","https://www.smartraveller.gov.au/destinations/asia/maldives","https://flagcdn.com/w20/mv.png",3.25,73.0,"MV","+960","MVR","G"],
-  ["Mongolia","https://www.smartraveller.gov.au/destinations/asia/mongolia","https://flagcdn.com/w20/mn.png",46.0,105.0,"MN","+976","MNT","C"],
-  ["Myanmar","https://www.smartraveller.gov.au/destinations/asia/myanmar","https://flagcdn.com/w20/mm.png",22.0,98.0,"MM","+95","MMK","C"],
-  ["Nepal","https://www.smartraveller.gov.au/destinations/asia/nepal","https://flagcdn.com/w20/np.png",28.0,84.0,"NP","+977","NPR","C"],
-  ["North Korea (Democratic People's Republic of Korea)","https://www.smartraveller.gov.au/destinations/asia/north-korea-democratic-peoples-republic-korea","https://flagcdn.com/w20/kp.png",40.3399,127.5101,"KP","+850","KPW","A"],
-  ["Pakistan","https://www.smartraveller.gov.au/destinations/asia/pakistan","https://flagcdn.com/w20/pk.png",30.0,70.0,"PK","+92","PKR","C"],
-  ["Philippines","https://www.smartraveller.gov.au/destinations/asia/philippines","https://flagcdn.com/w20/ph.png",13.0,122.0,"PH","+63","PHP","ABC"],
-  ["Qatar","https://www.smartraveller.gov.au/destinations/asia/qatar","https://flagcdn.com/w20/qa.png",25.5,51.25,"QA","+974","QAR","C"],
-  ["South Korea","https://www.smartraveller.gov.au/destinations/asia/south-korea-republic-korea","https://flagcdn.com/w20/kr.png",37.0,127.5,"KR","+82","KRW","CF"],
-  ["Sri Lanka","https://www.smartraveller.gov.au/destinations/asia/sri-lanka","https://flagcdn.com/w20/lk.png",7.0,81.0,"LK","+94","LKR","DM"],
-  ["Singapore","https://www.smartraveller.gov.au/destinations/asia/singapore","https://flagcdn.com/w20/sg.png",1.3667,103.8,"SG","+65","SGD","G"],
-  ["Syria","https://www.smartraveller.gov.au/destinations/asia/syria","https://flagcdn.com/w20/sy.png",35.0,38.0,"SY","+963","SYP","C"],
-  ["Taiwan","https://www.smartraveller.gov.au/destinations/asia/taiwan","https://flagcdn.com/w20/tw.png",23.5,121.0,"TW","+886","TWD","AB"],
-  ["Tajikistan","https://www.smartraveller.gov.au/destinations/asia/tajikistan","https://flagcdn.com/w20/tj.png",39.0,71.0,"TJ","+992","TJS","C"],
-  ["Thailand","https://www.smartraveller.gov.au/destinations/asia/thailand","https://flagcdn.com/w20/th.png",15.0,100.0,"TH","+66","THB","ABC"],
-  ["Timor-Leste","https://www.smartraveller.gov.au/destinations/asia/timor-leste","https://flagcdn.com/w20/tl.png",-8.55,125.5167,"TL","+670","USD","CF"],
-  ["Turkmenistan","https://www.smartraveller.gov.au/destinations/asia/turkmenistan","https://flagcdn.com/w20/tm.png",40.0,60.0,"TM","+993","TMT","C"],
-  ["Uzbekistan","https://www.smartraveller.gov.au/destinations/asia/uzbekistan","https://flagcdn.com/w20/uz.png",41.0,64.0,"UZ","+998","UZS","C"],
-  ["Vietnam","https://www.smartraveller.gov.au/destinations/asia/vietnam","https://flagcdn.com/w20/vn.png",16.0,106.0,"VN","+84","VND","AC"],
-  ["Albania","https://www.smartraveller.gov.au/destinations/europe/albania","https://flagcdn.com/w20/al.png",41.0,20.0,"AL","+355","ALL","CF"],
-  ["Austria","https://www.smartraveller.gov.au/destinations/europe/austria","https://flagcdn.com/w20/at.png",47.3333,13.3333,"AT","+43","EUR","F"],
-  ["Belarus","https://www.smartraveller.gov.au/destinations/europe/belarus","https://flagcdn.com/w20/by.png",53.0,28.0,"BY","+375","BYN","C"],
-  ["Belgium","https://www.smartraveller.gov.au/destinations/europe/belgium","https://flagcdn.com/w20/be.png",50.8333,4.0,"BE","+32","EUR","E"],
-  ["Bosnia and Herzegovina","https://www.smartraveller.gov.au/destinations/europe/bosnia-and-herzegovina","https://flagcdn.com/w20/ba.png",44.0,18.0,"BA","+387","BAM","C"],
-  ["Bulgaria","https://www.smartraveller.gov.au/destinations/europe/bulgaria","https://flagcdn.com/w20/bg.png",43.0,25.0,"BG","+359","BGN","F"],
-  ["Cyprus","https://www.smartraveller.gov.au/destinations/europe/cyprus","https://flagcdn.com/w20/cy.png",35.0,33.0,"CY","+357","EUR","G"],
-  ["Czech Republic","https://www.smartraveller.gov.au/destinations/europe/czech-republic","https://flagcdn.com/w20/cz.png",49.75,15.5,"CZ","+420","CZK","E"],
-  ["Croatia","https://www.smartraveller.gov.au/destinations/europe/croatia","https://flagcdn.com/w20/hr.png",45.1667,15.5,"HR","+385","HRK","C"],
-  ["Estonia","https://www.smartraveller.gov.au/destinations/europe/estonia","https://flagcdn.com/w20/ee.png",59.0,26.0,"EE","+372","EUR","C"],
-  ["Finland","https://www.smartraveller.gov.au/destinations/europe/finland","https://flagcdn.com/w20/fi.png",64.0,26.0,"FI","+358","EUR","C"],
-  ["France","https://www.smartraveller.gov.au/destinations/europe/france","https://flagcdn.com/w20/fr.png",46.0,2.0,"FR","+33","EUR","E"],
-  ["Germany","https://www.smartraveller.gov.au/destinations/europe/germany","https://flagcdn.com/w20/de.png",51.0,9.0,"DE","+49","EUR","F"],
-  ["Greece","https://www.smartraveller.gov.au/destinations/europe/greece","https://flagcdn.com/w20/gr.png",39.0,22.0,"GR","+30","EUR","C"],
-  ["Hungary","https://www.smartraveller.gov.au/destinations/europe/hungary","https://flagcdn.com/w20/hu.png",47.0,20.0,"HU","+36","HUF","C"],
-  ["Iceland","https://www.smartraveller.gov.au/destinations/europe/iceland","https://flagcdn.com/w20/is.png",64.9631,-19.0208,"IS","+354","ISK","F"],
-  ["Ireland","https://www.smartraveller.gov.au/destinations/europe/ireland","https://flagcdn.com/w20/ie.png",53.0,-8.0,"IE","+353","EUR","G"],
-  ["Italy","https://www.smartraveller.gov.au/destinations/europe/italy","https://flagcdn.com/w20/it.png",42.8333,12.8333,"IT","+39","EUR","F"],
-  ["Latvia","https://www.smartraveller.gov.au/destinations/europe/latvia","https://flagcdn.com/w20/lv.png",57.0,25.0,"LV","+371","EUR","C"],
-  ["Lithuania","https://www.smartraveller.gov.au/destinations/europe/lithuania","https://flagcdn.com/w20/lt.png",56.0,24.0,"LT","+370","EUR","C"],
-  ["Luxembourg","https://www.smartraveller.gov.au/destinations/europe/luxembourg","https://flagcdn.com/w20/lu.png",49.75,6.1667,"LU","+352","EUR","C"],
-  ["Malta","https://www.smartraveller.gov.au/destinations/europe/malta","https://flagcdn.com/w20/mt.png",35.8333,14.5833,"MT","+356","EUR","G"],
-  ["Moldova","https://www.smartraveller.gov.au/destinations/europe/moldova","https://flagcdn.com/w20/md.png",47.0,29.0,"MD","+373","MDL","C"],
-  ["Montenegro","https://www.smartraveller.gov.au/destinations/europe/montenegro","https://flagcdn.com/w20/me.png",42.0,19.0,"ME","+382","EUR","C"],
-  ["Netherlands","https://www.smartraveller.gov.au/destinations/europe/netherlands","https://flagcdn.com/w20/nl.png",52.5,5.75,"NL","+31","EUR","C"],
-  ["North Macedonia","https://www.smartraveller.gov.au/destinations/europe/north-macedonia","https://flagcdn.com/w20/mk.png",41.8333,22.0,"MK","+389","MKD","C"],
-  ["Norway","https://www.smartraveller.gov.au/destinations/europe/norway","https://flagcdn.com/w20/no.png",62.0,10.0,"NO","+47","NOK","F"],
-  ["Poland","https://www.smartraveller.gov.au/destinations/europe/poland","https://flagcdn.com/w20/pl.png",52.0,20.0,"PL","+48","PLN","C"],
-  ["Portugal","https://www.smartraveller.gov.au/destinations/europe/portugal","https://flagcdn.com/w20/pt.png",39.5,-8.0,"PT","+351","EUR","C"],
-  ["Romania","https://www.smartraveller.gov.au/destinations/europe/romania","https://flagcdn.com/w20/ro.png",46.0,25.0,"RO","+40","RON","C"],
-  ["Russia","https://www.smartraveller.gov.au/destinations/europe/russia","https://flagcdn.com/w20/ru.png",60.0,100.0,"RU","+7","RUB","C"],
-  ["Serbia","https://www.smartraveller.gov.au/destinations/europe/serbia","https://flagcdn.com/w20/rs.png",44.0,21.0,"RS","+381","RSD","C"],
-  ["Slovakia","https://www.smartraveller.gov.au/destinations/europe/slovakia","https://flagcdn.com/w20/sk.png",48.6667,19.5,"SK","+421","EUR","C"],
-  ["Slovenia","https://www.smartraveller.gov.au/destinations/europe/slovenia","https://flagcdn.com/w20/si.png",46.0,15.0,"SI","+386","EUR","C"],
-  ["Spain","https://www.smartraveller.gov.au/destinations/europe/spain","https://flagcdn.com/w20/es.png",40.0,-4.0,"ES","+34","EUR","F"],
-  ["Sweden","https://www.smartraveller.gov.au/destinations/europe/sweden","https://flagcdn.com/w20/se.png",62.0,15.0,"SE","+46","SEK","F"],
-  ["Switzerland","https://www.smartraveller.gov.au/destinations/europe/switzerland","https://flagcdn.com/w20/ch.png",47.0,8.0,"CH","+41","CHF","J"],
-  ["Türkiye","https://www.smartraveller.gov.au/destinations/europe/turkiye","https://flagcdn.com/w20/tr.png",39.0,35.0,"TR","+90","TRY","CE"],
-  ["Ukraine","https://www.smartraveller.gov.au/destinations/europe/ukraine","https://flagcdn.com/w20/ua.png",49.0,32.0,"UA","+380","UAH","CE"],
-  ["United Kingdom","https://www.smartraveller.gov.au/destinations/europe/united-kingdom","https://flagcdn.com/w20/gb.png",54.0,-2.0,"GB","+44","GBP","G"],
-  ["Bahrain","https://www.smartraveller.gov.au/destinations/middle-east/bahrain","https://flagcdn.com/w20/bh.png",26.0,50.55,"BH","+973","BHD","G"],
-  ["Iran","https://www.smartraveller.gov.au/destinations/middle-east/iran","https://flagcdn.com/w20/ir.png",32.0,53.0,"IR","+98","IRR","CF"],
-  ["Iraq","https://www.smartraveller.gov.au/destinations/middle-east/iraq","https://flagcdn.com/w20/iq.png",33.0,44.0,"IQ","+964","IQD","CF"],
-  ["Israel","https://www.smartraveller.gov.au/destinations/middle-east/israel","https://flagcdn.com/w20/il.png",31.5,34.75,"IL","+972","ILS","H"],
-  ["Jordan","https://www.smartraveller.gov.au/destinations/middle-east/jordan","https://flagcdn.com/w20/jo.png",31.0,36.0,"JO","+962","JOD","CF"],
-  ["Kuwait","https://www.smartraveller.gov.au/destinations/middle-east/kuwait","https://flagcdn.com/w20/kw.png",29.3375,47.6581,"KW","+965","KWD","G"],
-  ["Lebanon","https://www.smartraveller.gov.au/destinations/middle-east/lebanon","https://flagcdn.com/w20/lb.png",33.8333,35.8333,"LB","+961","LBP","CF"],
-  ["Oman","https://www.smartraveller.gov.au/destinations/middle-east/oman","https://flagcdn.com/w20/om.png",21.0,57.0,"OM","+968","OMR","G"],
-  ["Qatar","https://www.smartraveller.gov.au/destinations/middle-east/qatar","https://flagcdn.com/w20/qa.png",25.5,51.25,"QA","+974","QAR","CF"],
-  ["Saudi Arabia","https://www.smartraveller.gov.au/destinations/middle-east/saudi-arabia","https://flagcdn.com/w20/sa.png",25.0,45.0,"SA","+966","SAR","G"],
-  ["Syria","https://www.smartraveller.gov.au/destinations/middle-east/syria","https://flagcdn.com/w20/sy.png",35.0,38.0,"SY","+963","SYP","CF"],
-  ["Türkiye","https://www.smartraveller.gov.au/destinations/middle-east/turkiye","https://flagcdn.com/w20/tr.png",39.0,35.0,"TR","+90","TRY","CE"],
-  ["United Arab Emirates","https://www.smartraveller.gov.au/destinations/middle-east/united-arab-emirates","https://flagcdn.com/w20/ae.png",24.0,54.0,"AE","+971","AED","G"],
-  ["Yemen","https://www.smartraveller.gov.au/destinations/middle-east/yemen","https://flagcdn.com/w20/ye.png",15.0,48.0,"YE","+967","YER","CF"],
-  ["Australia","","https://flagcdn.com/w20/au.png",-27.0,133.0,"AU","+61","AUD","I"],
-  ["Fiji","https://www.smartraveller.gov.au/destinations/pacific/fiji","https://flagcdn.com/w20/fj.png",-18.0,175.0,"FJ","+679","FJD","I"],
-  ["Guam","https://www.smartraveller.gov.au/destinations/pacific/guam","https://flagcdn.com/w20/gu.png",13.4667,144.7833,"GU","+1-671","USD","ABC"],
-  ["Marshall Islands","https://www.smartraveller.gov.au/destinations/pacific/marshall-islands","https://flagcdn.com/w20/mh.png",9.0,168.0,"MH","+692","USD","ABC"],
-  ["Niue","https://www.smartraveller.gov.au/destinations/pacific/niue","https://flagcdn.com/w20/nu.png",-19.0333,-169.8667,"NU","+683","NZD","I"],
-  ["New Caledonia","https://www.smartraveller.gov.au/destinations/pacific/new-caledonia","https://flagcdn.com/w20/nc.png",-21.5,165.5,"NC","+687","XPF","E"],
-  ["New Zealand","https://www.smartraveller.gov.au/destinations/pacific/new-zealand","https://flagcdn.com/w20/nz.png",-41.0,174.0,"NZ","+64","NZD","I"],
-  ["Palau","https://www.smartraveller.gov.au/destinations/pacific/palau","https://flagcdn.com/w20/pw.png",7.5,134.5,"PW","+680","USD","ABC"],
-  ["Papua New Guinea","https://www.smartraveller.gov.au/destinations/pacific/papua-new-guinea","https://flagcdn.com/w20/pg.png",-6.0,147.0,"PG","+675","PGK","I"],
-  ["Samoa","https://www.smartraveller.gov.au/destinations/pacific/samoa","https://flagcdn.com/w20/ws.png",-13.5833,-172.3333,"WS","+685","WST","I"],
-  ["Solomon Islands","https://www.smartraveller.gov.au/destinations/pacific/solomon-islands","https://flagcdn.com/w20/sb.png",-8.0,159.0,"SB","+677","SBD","I"],
-  ["Tonga","https://www.smartraveller.gov.au/destinations/pacific/tonga","https://flagcdn.com/w20/to.png",-20.0,-175.0,"TO","+676","TOP","I"],
-  ["Vanuatu","https://www.smartraveller.gov.au/destinations/pacific/vanuatu","https://flagcdn.com/w20/vu.png",-16.0,167.0,"VU","+678","VUV","I"]
+const sites=[
+  {url:'https://www.onet.pl', domain:'onet.pl'},
+  {url:'https://www.wp.pl', domain:'wp.pl'},
+  {url:'https://www.interia.pl', domain:'interia.pl'},
+  {url:'https://www.gazeta.pl', domain:'gazeta.pl'},
+  {url:'https://www.polsatnews.pl', domain:'polsatnews.pl'},
+  {url:'https://expressbydgoski.pl', domain:'expressbydgoski.pl'},
+  {url:'https://www.rp.pl', domain:'rp.pl'},
+  {url:'https://www.newsweek.pl/lista-wydan', domain:'newsweek.pl'},
+  {url:'https://edition.cnn.com', domain:'cnn.com'},
+  {url:'https://www.bbc.com', domain:'bbc.com'},
+  {url:'https://www.reuters.com', domain:'reuters.com'},
+  {url:'https://www.flashscore.pl', domain:'flashscore.pl'}
 ];
 
-const capitalTimeZones = {
-  "DZ": "Africa/Algiers",
-  "LY": "Africa/Tripoli",
-  "TN": "Africa/Tunis",
-  "EG": "Africa/Cairo",
-  "MA": "Africa/Casablanca",
-  "MR": "Africa/Nouakchott",
-  "SD": "Africa/Khartoum",
-  "AO": "Africa/Luanda",
-  "BJ": "Africa/Porto-Novo",
-  "BW": "Africa/Gaborone",
-  "BI": "Africa/Bujumbura",
-  "CM": "Africa/Douala",
-  "CI": "Africa/Abidjan",
-  "ER": "Africa/Asmara",
-  "ET": "Africa/Addis_Ababa",
-  "GA": "Africa/Libreville",
-  "GH": "Africa/Accra",
-  "GN": "Africa/Conakry",
-  "KE": "Africa/Nairobi",
-  "LR": "Africa/Monrovia",
-  "MG": "Indian/Antananarivo",
-  "MW": "Africa/Blantyre",
-  "MU": "Indian/Mauritius",
-  "MZ": "Africa/Maputo",
-  "NA": "Africa/Windhoek",
-  "NG": "Africa/Lagos",
-  "RW": "Africa/Kigali",
-  "SN": "Africa/Dakar",
-  "ZA": "Africa/Johannesburg",
-  "TZ": "Africa/Dar_es_Salaam",
-  "UG": "Africa/Kampala",
-  "ZM": "Africa/Lusaka",
-  "ZW": "Africa/Harare",
-  "AR": "America/Argentina/Buenos_Aires",
-  "BZ": "America/Belize",
-  "BO": "America/La_Paz",
-  "BR": "America/Sao_Paulo",
-  "CA": "America/Toronto",
-  "CL": "America/Santiago",
-  "CO": "America/Bogota",
-  "CR": "America/Costa_Rica",
-  "CU": "America/Havana",
-  "DO": "America/Santo_Domingo",
-  "EC": "America/Guayaquil",
-  "SV": "America/El_Salvador",
-  "GT": "America/Guatemala",
-  "GY": "America/Guyana",
-  "HN": "America/Tegucigalpa",
-  "JM": "America/Jamaica",
-  "MX": "America/Mexico_City",
-  "NI": "America/Managua",
-  "PA": "America/Panama",
-  "PY": "America/Asuncion",
-  "PE": "America/Lima",
-  "BS": "America/Nassau",
-  "TT": "America/Port_of_Spain",
-  "US": "America/New_York",
-  "UY": "America/Montevideo",
-  "VE": "America/Caracas",
-  "AF": "Asia/Kabul",
-  "AZ": "Asia/Baku",
-  "BD": "Asia/Dhaka",
-  "BN": "Asia/Brunei",
-  "KH": "Asia/Phnom_Penh",
-  "CN": "Asia/Shanghai",
-  "ID": "Asia/Jakarta",
-  "IN": "Asia/Kolkata",
-  "IR": "Asia/Tehran",
-  "IQ": "Asia/Baghdad",
-  "IL": "Asia/Jerusalem",
-  "JP": "Asia/Tokyo",
-  "JO": "Asia/Amman",
-  "KZ": "Asia/Almaty",
-  "LA": "Asia/Vientiane",
-  "LB": "Asia/Beirut",
-  "MY": "Asia/Kuala_Lumpur",
-  "MV": "Indian/Maldives",
-  "MN": "Asia/Ulaanbaatar",
-  "MM": "Asia/Yangon",
-  "NP": "Asia/Kathmandu",
-  "KP": "Asia/Pyongyang",
-  "PK": "Asia/Karachi",
-  "PH": "Asia/Manila",
-  "QA": "Asia/Qatar",
-  "KR": "Asia/Seoul",
-  "LK": "Asia/Colombo",
-  "SG": "Asia/Singapore",
-  "SY": "Asia/Damascus",
-  "TW": "Asia/Taipei",
-  "TJ": "Asia/Dushanbe",
-  "TH": "Asia/Bangkok",
-  "TL": "Asia/Dili",
-  "TM": "Asia/Ashgabat",
-  "UZ": "Asia/Tashkent",
-  "VN": "Asia/Ho_Chi_Minh",
-  "AL": "Europe/Tirane",
-  "AT": "Europe/Vienna",
-  "BY": "Europe/Minsk",
-  "BE": "Europe/Brussels",
-  "BA": "Europe/Sarajevo",
-  "BG": "Europe/Sofia",
-  "CY": "Asia/Nicosia",
-  "CZ": "Europe/Prague",
-  "HR": "Europe/Zagreb",
-  "EE": "Europe/Tallinn",
-  "FI": "Europe/Helsinki",
-  "FR": "Europe/Paris",
-  "DE": "Europe/Berlin",
-  "GR": "Europe/Athens",
-  "HU": "Europe/Budapest",
-  "IS": "Atlantic/Reykjavik",
-  "IE": "Europe/Dublin",
-  "IT": "Europe/Rome",
-  "LV": "Europe/Riga",
-  "LT": "Europe/Vilnius",
-  "LU": "Europe/Luxembourg",
-  "MT": "Europe/Malta",
-  "MD": "Europe/Chisinau",
-  "ME": "Europe/Podgorica",
-  "NL": "Europe/Amsterdam",
-  "MK": "Europe/Skopje",
-  "NO": "Europe/Oslo",
-  "PL": "Europe/Warsaw",
-  "PT": "Europe/Lisbon",
-  "RO": "Europe/Bucharest",
-  "RU": "Europe/Moscow",
-  "RS": "Europe/Belgrade",
-  "SK": "Europe/Bratislava",
-  "SI": "Europe/Ljubljana",
-  "ES": "Europe/Madrid",
-  "SE": "Europe/Stockholm",
-  "CH": "Europe/Zurich",
-  "TR": "Europe/Istanbul",
-  "UA": "Europe/Kiev",
-  "GB": "Europe/London",
-  "BH": "Asia/Bahrain",
-  "AE": "Asia/Dubai",
-  "YE": "Asia/Aden",
-  "AU": "Australia/Sydney",
-  "FJ": "Pacific/Fiji",
-  "GU": "Pacific/Guam",
-  "MH": "Pacific/Majuro",
-  "NZ": "Pacific/Auckland",
-  "PG": "Pacific/Port_Moresby",
-  "WS": "Pacific/Apia",
-  "SB": "Pacific/Guadalcanal",
-  "TO": "Pacific/Tongatapu",
-  "VU": "Pacific/Efate"
-};
-
-const weatherData = new Map();
-
-async function fetchWeather(lat, lon) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=uv_index&timezone=auto`;
-  try {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Weather fetch error');
-    const data = await response.json();
-    const wx = data.current_weather || {};
-    const now = new Date();
-
-    const uvTimes = data.hourly.time || [];
-    const uvIndexArray = data.hourly.uv_index || [];
-
-    const findClosestIndex = (times) => {
-      let minDiff = Infinity;
-      let closestIdx = 0;
-      times.forEach((t, i) => {
-        const diff = Math.abs(new Date(t).getTime() - now.getTime());
-        if (diff < minDiff) {
-          minDiff = diff;
-          closestIdx = i;
-        }
-      });
-      return closestIdx;
-    };
-
-    const uvIdx = findClosestIndex(uvTimes);
-
-    return {
-      temperature: wx.temperature,
-      windspeed: wx.windspeed,
-      winddirection: wx.winddirection,
-      pressure: wx.pressure ?? 'N/A',
-      uv: uvIndexArray[uvIdx] ?? 'N/A'
-    };
-  } catch (e) {
-    return null;
-  }
-}
-
-function getOfficialCapitalTime(isoCode) {
-  const tz = capitalTimeZones[isoCode];
-  if (!tz) return '';
-  const now = new Date();
-  return new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit', minute: '2-digit', timeZone: tz
-  }).format(now);
-}
-
-function getSunTimes(lat, lon, isoCode, date = new Date()) {
-  const times = SunCalc.getTimes(date, lat, lon);
-
-  const formatTimeInZone = (dateObj, timeZone) => {
-    if (!dateObj) return 'N/A';
-    return new Intl.DateTimeFormat('en-GB', {
-      hour: '2-digit', minute: '2-digit', timeZone
-    }).format(dateObj);
-  };
-
-  const tz = capitalTimeZones[isoCode] || Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-  return {
-    sunrise: formatTimeInZone(times.sunrise, tz),
-    sunset: formatTimeInZone(times.sunset, tz)
-  };
-}
-
-const createFlagLabelIcon = (
-  flagUrl, isoCode = '', areaCode = '', currencyCode = '', plugType = '',
-  showInfo = false, lon = 0,
-  weather = null, showWeather = false,
-  sunrise = 'N/A', sunset = 'N/A'
-) => {
-  const fixedWidth = 140; // wide to accommodate all info in one block
-  const combinedHtml = showInfo ? `
-   <div style="font-weight:bold; color:blue; font-family: Arial, sans-serif; font-size:11px; white-space: nowrap;">
-      ${isoCode}: ${areaCode} | ${currencyCode} | ${plugType} | ${getOfficialCapitalTime(isoCode)}
-      ${showWeather && weather ? `<br>${weather.temperature}°C|${weather.windspeed} kmh|☀️${sunrise}-${sunset}` : ''}
-    </div>
-  ` : '';
-
-  const html = `<div style="text-align:center; display: inline-block; width: ${fixedWidth}px;">
-    <img src="${flagUrl}" style="width:22px; height:16px; border:1px solid #444; border-radius:2px; display:block; margin: 0 auto 4px auto;"/>
-    ${combinedHtml}
-  </div>`;
-
-  return L.divIcon({
-    html: html,
-    className: '',
-    iconSize: [fixedWidth, showInfo ? (showWeather ? 60 : 30) : 20],
-    iconAnchor: [fixedWidth / 2, 16]
-  });
-};
-
-const map = L.map('leafletmap').setView([10, 20], 2);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: "© OpenStreetMap contributors"
-}).addTo(map);
-
-map.on('click', () => {
-  map.setZoom(map.getZoom() + 1);
+const siteIcons=document.getElementById('siteIcons');
+sites.forEach(site=>{
+  const img=document.createElement('img');
+  img.src=`https://www.google.com/s2/favicons?domain=${site.domain}&sz=24`;
+  img.onclick=()=>window.open(site.url,'_blank');
+  siteIcons.appendChild(img);
 });
 
-const markers = [];
-countries.forEach(([name, url, flag, lat, lon, isoCode, areaCode, currencyCode, plugType]) => {
-  const marker = L.marker([lat, lon], {
-    icon: createFlagLabelIcon(flag, isoCode, areaCode, currencyCode, plugType, false, lon)
-  }).addTo(map);
-  marker.on('click', (e) => {
-    e.originalEvent.preventDefault();
-    window.open(url, '_blank', 'noopener,noreferrer');
+const feedsX0=[
+  {url:'https://www.theverge.com/rss/index.xml', encoding:'utf-8'}
+  ];
+
+const feedsX1=[
+  {url:'https://www.tomsguide.com/feeds.xml', encoding:'utf-8'}
+];
+
+const feedsX2=[
+  {url:'https://www.wired.com/feed/rss', encoding:'utf-8'}
+];
+
+const feedsX3=[
+  {url:'https://www.sciencedaily.com/rss/top.xml', encoding:'utf-8'}
+];
+  
+const proxy='https://api.allorigins.win/get?url=';
+
+// fetch and render function for each block
+function fetchWithRetry(feed,retries){
+  return (feed.encoding==='windows-1250'
+    ? fetch(proxy+encodeURIComponent(feed.url)).then(r=>r.arrayBuffer()).then(buf=>{
+        const dec=new TextDecoder('windows-1250');
+        const text=dec.decode(buf);
+        return {success:1,text};
+      })
+    : fetch(proxy+encodeURIComponent(feed.url)).then(r=>r.json()).then(data=>{
+        return {success:1,text:data.contents};
+      })
+  ).catch(_=>{
+    if(retries>0)return new Promise(res=>setTimeout(()=>res(fetchWithRetry(feed,retries-1)),2000));
+    return {success:0,text:''};
   });
-  markers.push({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon, lat });
-});
-
-window.addEventListener('DOMContentLoaded', () => {
-  const basicInfoToggle = document.getElementById('basicInfoToggle');
-
-  basicInfoToggle.addEventListener('change', async e => {
-    const show = e.target.checked;
-
-    document.getElementById('plugTypesSection').style.display = show ? 'block' : 'none';
-
-    if (show) {
-      map.setView([52.0, 20.0], 6);
-    } else {
-      map.setView([10, 20], 2);
-    }
-
-    if (show) {
-      await Promise.all(markers.map(async m => {
-        if (!weatherData.has(m.isoCode)) {
-          const wx = await fetchWeather(m.lat, m.lon);
-          weatherData.set(m.isoCode, wx);
-        }
-      }));
-    }
-
-    markers.forEach(({ marker, flag, isoCode, areaCode, currencyCode, plugType, lon, lat }) => {
-  const sunTimes = getSunTimes(lat, lon, isoCode);
-  marker.setIcon(createFlagLabelIcon(
-    flag, isoCode, areaCode, currencyCode, plugType,
-    show, lon, weatherData.get(isoCode), show,
-    sunTimes.sunrise, sunTimes.sunset
-     ));
+}
+function fetchAndRender(feeds,containerId){
+  const feedList=document.getElementById(containerId),items=[];
+  Promise.all(feeds.map(feed=>fetchWithRetry(feed,1).then(res=>{
+    if(!res.success){items.push({title:'Feed error',link:'#',date:new Date().toISOString()});return;}
+    const parser=new DOMParser(),xml=parser.parseFromString(res.text,"application/xml");
+    Array.from(xml.querySelectorAll("item,entry")).forEach(e=>{
+      items.push({title:e.querySelector("title")?.textContent||"No title",link:e.querySelector("link")?.textContent||e.querySelector("link")?.getAttribute("href")||"#",date:e.querySelector("pubDate")?.textContent||e.querySelector("updated")?.textContent||new Date().toISOString()});
+    });
+  }))).then(()=>{
+    items.sort((a,b)=>new Date(b.date)-new Date(a.date));
+    feedList.innerHTML='';
+    items.slice(0,100).forEach(e=>{
+      const entry=document.createElement('div');
+      entry.className='feed-item';
+      const a=document.createElement('a'); a.href=e.link;a.target='_blank';
+      const img=document.createElement('img'); img.src=`https://www.google.com/s2/favicons?domain=${new URL(e.link).hostname}&sz=16`;
+      let tText=e.title.split(' ').slice(0,14).join(' ');if(e.title.split(' ').length>14)tText+='…';
+      const span=document.createElement('span');
+      const r=new Date(e.date),d=new Date();
+      span.textContent=' '+((d-r)/36e5<24?`${String(r.getHours()).padStart(2,'0')}:${String(r.getMinutes()).padStart(2,'0')}`:`${String(r.getDate()).padStart(2,'0')}/${String(r.getMonth()+1).padStart(2,'0')}`);
+      a.appendChild(img);a.appendChild(document.createTextNode(tText));a.appendChild(span);
+      entry.appendChild(a);feedList.appendChild(entry);
     });
   });
+}
+
+const titleSearch = document.getElementById('titleSearch');
+titleSearch.addEventListener('input', () => {
+  const filter = titleSearch.value.toLowerCase();
+  document.querySelectorAll('.feed-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = text.includes(filter) ? '' : 'none';
+  });
 });
+
+// Call for each block
+fetchAndRender(feedsX0,'feedListX0');
+fetchAndRender(feedsX1,'feedListX1');
+fetchAndRender(feedsX2,'feedListX2');
+fetchAndRender(feedsX3,'feedListX3');
 </script>
 </body>
 </html>
