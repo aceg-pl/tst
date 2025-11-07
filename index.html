@@ -1,153 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>News Portal</title>
-<style>
-  body{margin:0;padding:16px;font-family:-apple-system,system-ui,Arial;background:#f5f5f5;}
-  h1{margin-bottom:10px;}
-  .sites{margin-bottom:12px;text-align:center;}
-@media (max-width: 480px) {
-  .sites {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    justify-items: center;
-    gap: 6px 12px;
-  }
-}
-  .sites img{width:24px;height:24px;margin:0 6px;cursor:pointer;vertical-align:middle;}
-  .block-title{font-weight:600;font-size:14px;margin:8px 0 8px 0;}
-  .feed-list{display:grid;grid-gap:8px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
-  .feed-item{background:#fff;padding:6px;border-radius:6px;border:1px solid #ddd;overflow:hidden;font-size:13px;height:60px;}
-  .feed-item img{width:12px;height:12px;vertical-align:middle;margin-right:4px;}
-  .feed-item a{text-decoration:none;color:#007aff;}
-  .feed-item span{color:#666;margin-left:4px;font-size:12px;}
-  .scroll-pane {
-  max-height: 240px;
-  overflow-y: auto;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background: #fff;
-  margin-bottom: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-  padding: 0 6px;
-     }
-</style>
+  <meta charset="UTF-8">
+  <title>Weather & Sun Times – Bydgoszcz</title>
 </head>
 <body>
-<div class="sites" id="siteIcons"></div>
-<input type="search" id="titleSearch" placeholder="Search Titles..." 
-  style="width:180px; max-width:66%; padding:8px; margin:8px auto 12px auto; border-radius:6px; border:1px solid #ccc; font-size:14px; box-sizing:border-box; display:block;">
+  <div id="weather">Loading…</div>
 
-<div class="block-title">📰 Wiadomości</div>
-<div class="scroll-pane"><div class="feed-list" id="feedListX0">Loading feeds…</div></div>
-<div class="block-title">⚽️ Sport</div>
-<div class="scroll-pane"><div class="feed-list" id="feedListX1">Loading feeds…</div></div>
-<div class="block-title">🖥️ Tech</div>
-<div class="scroll-pane"><div class="feed-list" id="feedListX2">Loading feeds…</div></div>
-<div class="block-title">🌎 News</div>
-<div class="scroll-pane"><div class="feed-list" id="feedListX3">Loading feeds…</div></div>
-
-<script>
-
-const sites=[
-  {url:'https://www.onet.pl', domain:'onet.pl'},
-  {url:'https://www.wp.pl', domain:'wp.pl'},
-  {url:'https://www.interia.pl', domain:'interia.pl'},
-  {url:'https://www.gazeta.pl', domain:'gazeta.pl'},
-  {url:'https://www.polsatnews.pl', domain:'polsatnews.pl'},
-  {url:'https://expressbydgoski.pl', domain:'expressbydgoski.pl'},
-  {url:'https://www.rp.pl', domain:'rp.pl'},
-  {url:'https://www.newsweek.pl/lista-wydan', domain:'newsweek.pl'},
-  {url:'https://edition.cnn.com', domain:'cnn.com'},
-  {url:'https://www.bbc.com', domain:'bbc.com'},
-  {url:'https://www.reuters.com', domain:'reuters.com'},
-  {url:'https://www.flashscore.pl', domain:'flashscore.pl'}
-];
-
-const siteIcons=document.getElementById('siteIcons');
-sites.forEach(site=>{
-  const img=document.createElement('img');
-  img.src=`https://www.google.com/s2/favicons?domain=${site.domain}&sz=24`;
-  img.onclick=()=>window.open(site.url,'_blank');
-  siteIcons.appendChild(img);
-});
-
-const feedsX0=[
-  {url:'https://www.theverge.com/rss/index.xml', encoding:'utf-8'}
-  ];
-
-const feedsX1=[
-  {url:'https://www.tomsguide.com/feeds.xml', encoding:'utf-8'}
-];
-
-const feedsX2=[
-  {url:'https://www.wired.com/feed/rss', encoding:'utf-8'}
-];
-
-const feedsX3=[
-  {url:'https://www.sciencedaily.com/rss/top.xml', encoding:'utf-8'}
-];
-  
-const proxy='https://api.allorigins.win/get?url=';
-
-// fetch and render function for each block
-function fetchWithRetry(feed,retries){
-  return (feed.encoding==='windows-1250'
-    ? fetch(proxy+encodeURIComponent(feed.url)).then(r=>r.arrayBuffer()).then(buf=>{
-        const dec=new TextDecoder('windows-1250');
-        const text=dec.decode(buf);
-        return {success:1,text};
+  <script>
+  (()=>{
+    const lat=53.1235, lon=18.0084, tz="Europe/Warsaw";
+    const out = document.getElementById("weather");
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=pressure_msl&daily=sunrise,sunset&timezone=${encodeURIComponent(tz)}`)
+      .then(r=>r.json())
+      .then(d=>{
+        const cw = d.current_weather;
+        const temp = cw.temperature;
+        const wind = cw.windspeed;
+        const wcode = cw.weathercode;
+        const desc = wcode<3 ? '☀️' : wcode<50 ? '☁️' : wcode<60 ? '🌧️' : '☔️';
+        const pressures = d.hourly.pressure_msl;
+        const times = d.hourly.time;
+        const now = new Date().toISOString().slice(0,19);
+        const idx = times.indexOf(now);
+        const pressure = idx>=0 ? pressures[idx] : "N/A";
+        const sunrise = d.daily.sunrise[0];
+        const sunset = d.daily.sunset[0];
+        out.innerHTML = `
+          ${desc}  🌡 ${temp}°C 🌬 ${wind} km/h 💨 ${pressure} hPa<br>
+          🌅 ${sunrise} 🌃 ${sunset}
+        `;
       })
-    : fetch(proxy+encodeURIComponent(feed.url)).then(r=>r.json()).then(data=>{
-        return {success:1,text:data.contents};
-      })
-  ).catch(_=>{
-    if(retries>0)return new Promise(res=>setTimeout(()=>res(fetchWithRetry(feed,retries-1)),2000));
-    return {success:0,text:''};
-  });
-}
-function fetchAndRender(feeds,containerId){
-  const feedList=document.getElementById(containerId),items=[];
-  Promise.all(feeds.map(feed=>fetchWithRetry(feed,1).then(res=>{
-    if(!res.success){items.push({title:'Feed error',link:'#',date:new Date().toISOString()});return;}
-    const parser=new DOMParser(),xml=parser.parseFromString(res.text,"application/xml");
-    Array.from(xml.querySelectorAll("item,entry")).forEach(e=>{
-      items.push({title:e.querySelector("title")?.textContent||"No title",link:e.querySelector("link")?.textContent||e.querySelector("link")?.getAttribute("href")||"#",date:e.querySelector("pubDate")?.textContent||e.querySelector("updated")?.textContent||new Date().toISOString()});
-    });
-  }))).then(()=>{
-    items.sort((a,b)=>new Date(b.date)-new Date(a.date));
-    feedList.innerHTML='';
-    items.slice(0,100).forEach(e=>{
-      const entry=document.createElement('div');
-      entry.className='feed-item';
-      const a=document.createElement('a'); a.href=e.link;a.target='_blank';
-      const img=document.createElement('img'); img.src=`https://www.google.com/s2/favicons?domain=${new URL(e.link).hostname}&sz=16`;
-      let tText=e.title.split(' ').slice(0,14).join(' ');if(e.title.split(' ').length>14)tText+='…';
-      const span=document.createElement('span');
-      const r=new Date(e.date),d=new Date();
-      span.textContent=' '+((d-r)/36e5<24?`${String(r.getHours()).padStart(2,'0')}:${String(r.getMinutes()).padStart(2,'0')}`:`${String(r.getDate()).padStart(2,'0')}/${String(r.getMonth()+1).padStart(2,'0')}`);
-      a.appendChild(img);a.appendChild(document.createTextNode(tText));a.appendChild(span);
-      entry.appendChild(a);feedList.appendChild(entry);
-    });
-  });
-}
-
-const titleSearch = document.getElementById('titleSearch');
-titleSearch.addEventListener('input', () => {
-  const filter = titleSearch.value.toLowerCase();
-  document.querySelectorAll('.feed-item').forEach(item => {
-    const text = item.textContent.toLowerCase();
-    item.style.display = text.includes(filter) ? '' : 'none';
-  });
-});
-
-// Call for each block
-fetchAndRender(feedsX0,'feedListX0');
-fetchAndRender(feedsX1,'feedListX1');
-fetchAndRender(feedsX2,'feedListX2');
-fetchAndRender(feedsX3,'feedListX3');
-</script>
+      .catch(e=>{
+        out.textContent = "Failed to load data.";
+      });
+  })();
+  </script>
 </body>
 </html>
