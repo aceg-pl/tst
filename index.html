@@ -1,133 +1,125 @@
 <!DOCTYPE html><html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>News Portal</title>
-
-  <!-- ✅ load uPlot correctly -->
-  <link rel="stylesheet" href="https://unpkg.com/uplot@1.6.30/dist/uPlot.min.css">
-  <script src="https://unpkg.com/uplot@1.6.30/dist/uPlot.iife.min.js"></script>
-
-  <style>
-    body{
-      margin:0;padding:0;
-      font-family:-apple-system,system-ui,Arial;
-      background:#f5f5f5;
-    }
-    .sticky-header{
-      position:sticky;top:0;z-index:100;
-      background:#f5f5f5;padding:16px 16px 0;
-      display:flex;align-items:center;justify-content:center;
-      gap:16px;flex-wrap:wrap;
-      box-shadow:0 2px 4px rgba(0,0,0,0.05);
-      position:relative;
-    }
-    /* ✅ chart fixed on the far left, not shifting layout */
-    #c{
-      position:absolute;left:10px;top:10px;
-      width:140px;height:70px;flex-shrink:0;
-      border-radius:6px;background:#fff;
-      box-shadow:0 1px 3px rgba(0,0,0,0.15);
-    }
-    .sites{
-      text-align:center;display:flex;flex-wrap:wrap;
-      justify-content:center;gap:6px;
-    }
-  </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>News Portal</title>
+<link rel="stylesheet" href="https://unpkg.com/uplot@1.6.30/dist/uPlot.min.css">
+<script src="https://unpkg.com/uplot@1.6.30/dist/uPlot.iife.min.js"></script>
+<style>
+  :root{--bg:#f5f5f5;--card:#fff;--mut:#999;}
+  body{margin:0;padding:0;font-family:-apple-system,system-ui,Arial;background:var(--bg);color:#000}
+  .sticky-header{position:sticky;top:0;z-index:100;background:var(--bg);padding:16px 16px 0;
+    display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;box-shadow:0 2px 4px rgba(0,0,0,.05);position:relative}
+  /* tiny chart sits at far-left, no layout shift */
+  #c{position:absolute;left:10px;top:10px;width:140px;height:70px;border-radius:6px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.15);overflow:hidden}
+  .sites{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+  .block-title{font-weight:600;padding:8px 10px;margin:8px 0 0;background:#ddd}
+  .scroll-pane{padding:6px 10px}
+  .feed-item{display:block;background:#fff;border:1px solid #ddd;border-radius:6px;margin:6px 0;padding:6px 8px;
+    text-decoration:none;color:#000;font-size:13px}
+  .feed-item img{width:12px;height:12px;margin-right:6px;vertical-align:middle}
+  .feed-item span{margin-left:6px;color:#666}
+  #datebar{background:#fff;border:1px solid #ddd;border-radius:8px;margin:8px 16px;padding:8px 10px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  #d{font-weight:600;text-align:center;cursor:pointer}
+  #datebar h2{display:inline;margin-right:6px;font-size:15px}
+  .mut{color:var(--mut)}
+  /* keep header content centered despite absolute chart */
+  .sticky-header > :not(#c){margin-left:0}
+  @media (max-width:520px){#c{left:8px;top:8px;width:120px;height:64px}}
+</style>
 </head>
-
 <body>
 
-  <div class="sticky-header">
-    <div id="c"></div> <!-- chart on left -->
-    <div class="sites" id="siteIcons"></div>
-    <div id="searchLine" style="position:relative;display:flex;align-items:center;justify-content:center;max-width:400px;width:100%">
-      <input type="search" id="titleSearch" placeholder="Search Titles..." style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;font-size:14px;box-sizing:border-box">
-      <div id="scrollButtons" style="position:absolute;right:4px;display:flex;gap:8px;user-select:none;font-size:20px;cursor:pointer">
-        <div id="pageDownArrow" title="Scroll one page down">⬇️</div>
-        <div id="topArrow" title="Scroll to top">⏫</div>
-      </div>
+<div class="sticky-header">
+  <div id="c"></div>
+  <div class="sites" id="siteIcons"></div>
+  <div id="searchLine" style="position:relative;display:flex;align-items:center;justify-content:center;max-width:420px;width:100%">
+    <input type="search" id="titleSearch" placeholder="Search Titles..." style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;font-size:14px;box-sizing:border-box">
+    <div id="scrollButtons" style="position:absolute;right:4px;display:flex;gap:8px;user-select:none;font-size:20px;cursor:pointer">
+      <div id="pageDownArrow" title="Scroll one page down">⬇️</div>
+      <div id="topArrow" title="Scroll to top">⏫</div>
     </div>
-  </div>
-
-<div id="datebar">
-  <div id="d"></div>
-  <div id="content" style="display:none;">
-    <div id="otd"><h2>On this day</h2><div class="mut">loading…</div></div>
-    <div id="mv"><h2>Movies</h2><div class="mut">loading…</div></div>
-    <div id="al"><h2>Albums</h2><div class="mut">loading…</div></div>
-    <div id="ft"><h2>Matches</h2><div class="mut">loading…</div></div>
   </div>
 </div>
 
-<div class="block-title">📰 Wiadomości</div><div class="scroll-pane"><div class="feed-list" id="feedListX0">Loading…</div></div>
-<div class="block-title">⚽️ Sport</div><div class="scroll-pane"><div class="feed-list" id="feedListX1">Loading…</div></div>
-<div class="block-title">🖥️ Tech</div><div class="scroll-pane"><div class="feed-list" id="feedListX2">Loading…</div></div>
-<div class="block-title">🌎 News</div><div class="scroll-pane"><div class="feed-list" id="feedListX3">Loading…</div></div>
-<div class="block-title">🎬 AV</div><div class="scroll-pane"><div class="feed-list" id="feedListX4">Loading…</div></div>
+<div id="datebar">
+  <div id="d"></div>
+  <div id="content" style="display:none">
+    <div id="otd"><h2>On this day</h2><span class="mut">loading…</span></div>
+    <div id="mv"><h2>Movies</h2><span class="mut">loading…</span></div>
+    <div id="al"><h2>Albums</h2><span class="mut">loading…</span></div>
+    <div id="ft"><h2>Matches</h2><span class="mut">loading…</span></div>
+  </div>
+</div>
+
+<div class="block-title">📰 Wiadomości</div><div class="scroll-pane"><div id="feedListX0">Loading…</div></div>
+<div class="block-title">⚽️ Sport</div><div class="scroll-pane"><div id="feedListX1">Loading…</div></div>
+<div class="block-title">🖥️ Tech</div><div class="scroll-pane"><div id="feedListX2">Loading…</div></div>
+<div class="block-title">🌎 News</div><div class="scroll-pane"><div id="feedListX3">Loading…</div></div>
+<div class="block-title">🎬 AV</div><div class="scroll-pane"><div id="feedListX4">Loading…</div></div>
 
 <script>
-const sites=[{url:'https://www.onet.pl',d:'onet.pl'},{url:'https://www.wp.pl',d:'wp.pl'},{url:'https://www.interia.pl',d:'interia.pl'},{url:'https://www.gazeta.pl',d:'gazeta.pl'},{url:'https://www.polsatnews.pl',d:'polsatnews.pl'},{url:'https://expressbydgoski.pl',d:'expressbydgoski.pl'},{url:'https://www.rp.pl',d:'rp.pl'},{url:'https://www.newsweek.pl/lista-wydan',d:'newsweek.pl'},{url:'https://edition.cnn.com',d:'cnn.com'},{url:'https://www.bbc.com',d:'bbc.com'},{url:'https://www.reuters.com',d:'reuters.com'},{url:'https://www.flashscore.pl',d:'flashscore.pl'}];
-const siteIcons=document.getElementById('siteIcons');
-sites.forEach(s=>{let i=document.createElement('img');i.loading='lazy';i.src=`https://www.google.com/s2/favicons?domain=${s.d}&sz=24`;i.onclick=()=>open(s.url,'_blank');siteIcons.appendChild(i);});
+/* ---------- quick helpers ---------- */
+const $=id=>document.getElementById(id);
+const set=(id,html)=>($(id).innerHTML=html);
+const j=async(u,o)=>{try{const r=await fetch(u,o);if(!r.ok)throw 0;return await r.json()}catch{return null}};
+const bullets=(arr,max=8,map=x=>x)=>arr?.length?arr.slice(0,max).map(map).join(" • "):'<span class="mut">none</span>';
+
+/* ---------- header sites ---------- */
+const sites=[{url:'https://www.onet.pl',d:'onet.pl'},{url:'https://www.wp.pl',d:'wp.pl'},{url:'https://www.interia.pl',d:'interia.pl'},{url:'https://www.gazeta.pl',d:'gazeta.pl'},{url:'https://www.polsatnews.pl',d:'polsatnews.pl'},{url:'https://expressbydgoski.pl',d:'expressbydgoski.pl'},{url:'https://www.rp.pl',d:'rp.pl'},{url:'https://www.newsweek.pl',d:'newsweek.pl'},{url:'https://edition.cnn.com',d:'cnn.com'},{url:'https://www.bbc.com',d:'bbc.com'},{url:'https://www.reuters.com',d:'reuters.com'},{url:'https://www.flashscore.pl',d:'flashscore.pl'}];
+const siteIcons=$('siteIcons');
+sites.forEach(s=>{const i=new Image();i.loading='lazy';i.src=`https://www.google.com/s2/favicons?domain=${s.d}&sz=24`;i.style.width='24px';i.style.height='24px';i.style.cursor='pointer';i.onclick=()=>open(s.url,'_blank');siteIcons.appendChild(i);});
+
+/* ---------- feeds ---------- */
 const feedsX0=[{url:'https://wiadomosci.onet.pl/.feed'},{url:'https://wiadomosci.gazeta.pl/pub/rss/wiadomosci.htm'},{url:'https://www.polsatnews.pl/rss/wszystkie.xml'},{url:'https://wiadomosci.wp.pl/rss.xml'},{url:'https://wydarzenia.interia.pl/feed'}];
 const feedsX1=[{url:'https://www.polsatsport.pl/rss/wszystkie.xml'},{url:'https://www.sport.pl/pub/rss/sport.xml'},{url:'https://www.soccernews.com/category/la-liga/feed/'}];
 const feedsX2=[{url:'https://www.theverge.com/rss/index.xml'},{url:'https://www.wired.com/feed/rss'},{url:'https://www.sciencedaily.com/rss/top.xml'}];
 const feedsX3=[{url:'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en'},{url:'https://feeds.bbci.co.uk/news/rss.xml'}];
 const feedsX4=[{url:'https://eol-feeds.eonline.com/rssfeed/us/top_stories'},{url:'https://www.ign.com/rss/articles/feed'}];
-const proxy1='https://api.allorigins.win/get?url=',proxy2='https://api.codetabs.com/v1/proxy?quest=';
+const proxy='https://api.allorigins.win/get?url=';
 
-function fR(f,r=1){return fetch(proxy1+encodeURIComponent(f.url)).then(x=>x.json()).then(d=>({ok:1,t:d.contents})).catch(_=>r?fRalt(f,r-1):{ok:0,t:''})}
-function fRalt(f,r=1){return fetch(proxy2+encodeURIComponent(f.url)).then(x=>x.text()).then(t=>({ok:1,t})).catch(_=>r?fRalt(f,r-1):{ok:0,t:''})}
-
-function fNR(feeds,id,page=0){
- let el=document.getElementById(id);if(page===0)el.innerHTML='';
- Promise.all(feeds.map(f=>fR(f,1).then(r=>{
-   if(!r.ok)return[];
-   let p=new DOMParser(),x=p.parseFromString(r.t,'application/xml');
-   return Array.from(x.querySelectorAll('item,entry')).map(e=>{
-     let t=e.querySelector('title')?.textContent||'No title',
-         l=e.querySelector('link')?.textContent||e.querySelector('link')?.getAttribute('href')||'#',
-         d=e.querySelector('pubDate')?.textContent||e.querySelector('updated')?.textContent||new Date().toISOString();
-     return {t,l,d:new Date(d)};
-   });
- }))).then(all=>{
-   let items=all.flat().sort((a,b)=>b.d-a.d);
-   items.slice(page*20,(page+1)*20).forEach(n=>{
-     let a=document.createElement('a');a.href=n.l;a.target='_blank';a.className='feed-item';
-     let im=document.createElement('img');im.loading='lazy';im.src=`https://www.google.com/s2/favicons?domain=${new URL(n.l).hostname}&sz=16`;
-     let sp=document.createElement('span'),rD=n.d,nD=new Date();
-     sp.textContent=' '+((nD-rD)/36e5<24?`${String(rD.getHours()).padStart(2,'0')}:${String(rD.getMinutes()).padStart(2,'0')}`:`${String(rD.getDate()).padStart(2,'0')}/${String(rD.getMonth()+1).padStart(2,'0')}`);
-     a.appendChild(im);a.appendChild(document.createTextNode(' '+n.t.slice(0,80)+(n.t.length>80?'…':'')));a.appendChild(sp);
-     el.appendChild(a);
-   });
-   if(items.length>(page+1)*20){
-     let btn=document.createElement('button');btn.textContent='Load more';btn.className='loadmore';
-     btn.onclick=()=>{btn.remove();fNR(feeds,id,page+1)};el.after(btn);
-   }
- });
+const fetchFeed=f=>fetch(proxy+encodeURIComponent(f.url)).then(r=>r.json()).then(d=>({ok:1,t:d.contents})).catch(()=>({ok:0,t:''}));
+function renderFeeds(feeds,id,page=0){
+  const el=$(id); if(page===0) el.innerHTML='';
+  Promise.all(feeds.map(f=>fetchFeed(f).then(r=>{
+    if(!r.ok) return [];
+    const x=(new DOMParser()).parseFromString(r.t,'application/xml');
+    return [...x.querySelectorAll('item,entry')].map(e=>{
+      const t=e.querySelector('title')?.textContent?.trim()||'No title';
+      const l=e.querySelector('link')?.textContent||e.querySelector('link')?.getAttribute('href')||'#';
+      const d=e.querySelector('pubDate')?.textContent||e.querySelector('updated')?.textContent||new Date().toISOString();
+      return {t,l,d:new Date(d)};
+    });
+  })) ).then(all=>{
+    const items=all.flat().sort((a,b)=>b.d-a.d);
+    items.slice(page*20,(page+1)*20).forEach(n=>{
+      const a=document.createElement('a'); a.className='feed-item'; a.href=n.l; a.target='_blank';
+      const im=new Image(); im.loading='lazy'; im.src=`https://www.google.com/s2/favicons?domain=${new URL(n.l).hostname}&sz=16`;
+      const sp=document.createElement('span'), now=new Date();
+      sp.textContent=((now-n.d)/36e5<24)?` ${String(n.d.getHours()).padStart(2,'0')}:${String(n.d.getMinutes()).padStart(2,'0')}`
+        :` ${String(n.d.getDate()).padStart(2,'0')}/${String(n.d.getMonth()+1).padStart(2,'0')}`;
+      a.appendChild(im); a.appendChild(document.createTextNode(' '+(n.t.length>80?n.t.slice(0,80)+'…':n.t))); a.appendChild(sp);
+      el.appendChild(a);
+    });
+  });
 }
+function loadSeq(){
+  renderFeeds(feedsX0,'feedListX0');
+  setTimeout(()=>renderFeeds(feedsX1,'feedListX1'),300);
+  setTimeout(()=>renderFeeds(feedsX2,'feedListX2'),600);
+  setTimeout(()=>renderFeeds(feedsX3,'feedListX3'),900);
+  setTimeout(()=>renderFeeds(feedsX4,'feedListX4'),1200);
+}
+loadSeq();
 
-titleSearch.oninput=()=>{let f=titleSearch.value.toLowerCase();document.querySelectorAll('.feed-item').forEach(x=>x.style.display=x.textContent.toLowerCase().includes(f)?'':'none')};
+/* ---------- search + scroll ---------- */
+titleSearch.oninput=()=>{const f=titleSearch.value.toLowerCase();document.querySelectorAll('.feed-item').forEach(x=>x.style.display=x.textContent.toLowerCase().includes(f)?'':'none')};
 pageDownArrow.onclick=()=>scrollBy({top:innerHeight,behavior:'smooth'});
 topArrow.onclick=()=>scrollTo({top:0,behavior:'smooth'});
 
-function loadSeq(){fNR(feedsX0,'feedListX0');setTimeout(()=>fNR(feedsX1,'feedListX1'),400);setTimeout(()=>fNR(feedsX2,'feedListX2'),800);setTimeout(()=>fNR(feedsX3,'feedListX3'),1200);setTimeout(()=>fNR(feedsX4,'feedListX4'),1600);}
-loadSeq();
-
+/* ---------- datebar: namesday + weather + moon + sections ---------- */
 (async()=>{
-const tmdbKey="179d23dc4b4a1ba27263fcc2503d5e3d";
-const footKey="f1637751ac2e41dc8cfbe1f9492c0a4b";                
-
-const today=new Date(),
-ymd=today.toISOString().slice(0,10),
-MM=('0'+(today.getMonth()+1)).slice(-2),
-DD=('0'+today.getDate()).slice(-2);
-const $=id=>document.getElementById(id),set=(id,html)=>($(id).innerHTML=html);
-
-// 🔹 Static Polish names-day array
-const namesdayArray=[
+  const today=new Date(), ymd=today.toISOString().slice(0,10), MM=('0'+(today.getMonth()+1)).slice(-2), DD=('0'+today.getDate()).slice(-2);
+  const namesdayArray=[
 ["Mieszka, Mieczysława, Marii","Izydora, Bazylego, Grzegorza","Arlety, Genowefy, Danuty","Tytusa, Anieli, Eugeniusza","Hanny, Szymona, Edwarda","Kacpra, Melchiora, Baltazara","Juliana, Lucjana, Rajmunda","Seweryna, Mścisława, Juliusza","Marceliny, Marianny, Juliana","Wilhelma, Dobrosława, Danuty","Honoraty, Teodozjusza, Matyldy","Grety, Arkadiusza, Rajmunda","Bogumiły, Weroniki, Hilarego","Feliksa, Domosława, Niny","Pawła, Arnolda, Izydora","Marcelego, Włodzimierza, Waldemara","Antoniego, Rościsława, Jana","Piotra, Małgorzaty","Henryka, Mariusza, Marty","Fabiana, Sebastiana","Agnieszki, Jarosława","Anastazego, Wincentego","Ildefonsa, Rajmunda","Felicji, Franciszka, Rafała","Pawła, Miłosza, Elwiry","Tymoteusza, Michała, Tytusa","Przybysława, Anieli, Jerzego","Walerego, Radomira, Tomasza","Zdzisława, Franciszka, Józefa","Macieja, Martyny, Teofila","Marceli, Ludwiki, Jana"],
 ["Brygidy, Ignacego, Seweryna","Marii, Miłosława","Błażeja, Oskara","Andrzeja, Weroniki, Joanny","Agaty, Adelajdy","Doroty, Bogdana, Pawła","Ryszarda, Teodora, Romana","Hieronima, Sebastiana, Ireny","Apolonii, Eryki, Cyryla","Elwiry, Jacka, Scholastyki","Lucjana, Olgierda","Eulalii, Radosława, Modesta","Grzegorza, Katarzyny","Cyryla, Metodego, Walentego","Jowity, Faustyna, Zygfryda","Danuty, Julianny, Daniela","Aleksego, Zbigniewa, Łukasza","Szymona, Konstancji, Flawiana","Arnolda, Konrada, Marcelego","Leona, Ludomira, Zenobiusza","Eleonory, Fortunata, Roberta","Marty, Małgorzaty, Piotra","Romany, Damiana, Polikarpa","Macieja, Bogusza, Sergiusza","Wiktora, Cezarego","Mirosława, Aleksandra","Gabriela, Anastazji","Romana, Ludomira, Lecha","Lecha, Lutosława"],
 ["Antoniny, Radosława, Dawida","Heleny, Halszki, Pawła","Maryny, Kunegundy, Tycjana","Lucji, Kazimierza, Eugeniusza","Adriana, Fryderyka, Teofila","Róży, Jordana, Agnieszki","Tomasza, Perpetuy, Felicyty","Beaty, Wincentego, Jana","Franciszki, Brunona","Cypriana, Marcela, Aleksandra","Ludosława, Konstantyna, Benedykta","Grzegorza, Justyna, Alojzego","Bożeny, Krystyny","Leona, Matyldy, Łazarza","Longina, Klemensa, Ludwiki","Izabeli, Oktawii, Hilarego","Patryka, Zbigniewa, Gertrudy","Cyryla, Edwarda, Boguchwały","Józefa, Bogdana","Klaudii, Eufemii, Maurycego","Lubomira, Benedykta","Katarzyny, Bogusława","Pelagii, Oktawiana, Feliksa","Marka, Gabriela, Katarzyny","Marioli, Wieczysława, Ireneusza","Larysy, Emanuela, Teodora","Lidii, Ernesta","Anieli, Sykstusa, Jana","Wiktoryna, Helmuta, Eustachego","Anieli, Kwiryna, Leonarda","Beniamina, Dobromierza, Leonarda"],
@@ -141,158 +133,114 @@ const namesdayArray=[
 ["Wszystkich Świętych","Bohdany, Bożydara","Sylwii, Marcina, Huberta","Karola, Olgierda","Elżbiety, Sławomira, Dominika","Feliksa, Leonarda, Ziemowita","Antoniego, Żytomira, Ernesta","Seweryna, Bogdana, Klaudiusza","Aleksandra, Ludwika, Teodora","Leny, Ludomira, Leona","Marcina, Bartłomieja, Teodora","Renaty, Witolda, Jozafata","Mateusza, Izaaka, Stanisława","Rogera, Serafina, Wawrzyńca","Alberta, Leopolda","Gertrudy, Edmunda, Marii","Salomei, Grzegorza, Elżbiety","Romana, Klaudyny, Karoliny","Seweryny, Maksyma, Salomei","Anatola, Sedzimira, Rafała","Alberta, Janusza, Konrada","Cecylii, Wszemiły, Stefana","Adelii, Klemensa, Felicyty","Flory, Emmy, Chryzogona","Erazma, Katarzyny","Delfiny, Sylwestra, Konrada","Waleriana, Wirgiliusza, Maksyma","Lesława, Zdzisława, Stefana","Błażeja, Saturnina","Andrzeja, Maury, Konstantego"],
 ["Natalii, Eligiusza, Edmunda","Balbiny, Bibianny, Pauliny","Franciszka, Ksawerego, Kasjana","Barbary, Krystiana, Jana","Sabiny, Krystyny, Edyty","Mikołaja, Jaremy, Emiliana","Marcina, Ambrożego, Teodora","Marii, Światozara, Makarego","Wiesława, Leokadii, Joanny","Julii, Danieli, Bogdana","Damazego, Waldemara, Daniela","Dagmary, Aleksandra, Ady","Łucji, Otylii","Alfreda, Izydora, Jana","Niny, Celiny, Waleriana","Albiny, Zdzisławy, Alicji","Olimpii, Łazarza, Floriana","Gracjana, Bogusława, Laurencji","Gabrieli, Dariusza, Eleonory","Bogumiły, Dominika","Tomisława, Seweryna, Piotra","Zenona, Honoraty, Franciszki","Wiktorii, Sławomiry, Jana","Adama, Ewy, Eweliny","Anastazji, Eugenii","Dionizego, Szczepana","Jana, Żanety, Maksyma","Teofilii, Godzisława","Dawida, Sylwestra, Mariusza"]
 ];
+  const namesday=(namesdayArray[today.getMonth()]?.[0])||"";
+  set('d',`<b>↕️ 📅 ${ymd} (${today.toLocaleDateString('pl-PL',{weekday:'long'})}) — 🕊️ ${namesday||'<span class="mut">none</span>'} ↕️</b>
+           <div id="weather" style="margin-top:4px;font-weight:400;font-size:13px"></div>`);
 
-// function to get today’s names
-function getNamesday(){
-  const d=new Date();
-  const m=d.getMonth(),day=d.getDate()-1;
-  return (namesdayArray[m]&&namesdayArray[m][day])?namesdayArray[m][day]:"";
-}
-  
-$("d").innerHTML=`
-  <b>↕️ 📅 ${ymd} (${today.toLocaleDateString('pl-PL',{weekday:'long'})}) — 🕊️ ${getNamesday()||"<span class='mut'>none</span>"} ↕️</b>
-  <div id="weather" style="margin-top:4px;font-weight:400;font-size:13px;color:#000"></div>
-`;
+  // weather + moon (Bydgoszcz coords)
+  (()=>{
+    const lat=53.1235, lon=18.0084, tz='Europe/Warsaw';
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=pressure_msl&daily=sunrise,sunset&timezone=${encodeURIComponent(tz)}`)
+    .then(r=>r.json()).then(d=>{
+      const cw=d.current_weather||{}, t=cw.temperature??'—', w=cw.windspeed??'—', wc=cw.weathercode??0;
+      const icon=wc<3?'☀️':wc<50?'☁️':wc<60?'🌧️':'☔️', prs=d.hourly?.pressure_msl||[], times=d.hourly?.time||[];
+      let nearest=0,m=1e9, now=new Date();
+      for(let i=0;i<times.length;i++){const diff=Math.abs(new Date(times[i])-now); if(diff<m){m=diff;nearest=i;}}
+      const p=prs[nearest]?Math.round(prs[nearest]):'—', sr=(d.daily?.sunrise?.[0]||'').split('T')[1]?.slice(0,5)||'–', ss=(d.daily?.sunset?.[0]||'').split('T')[1]?.slice(0,5)||'–';
+      const lp=2551443, newMoon=592500; let ph=(((now/1000)-newMoon)%lp)/lp; if(ph<0) ph+=1;
+      const moon=ph<0.03||ph>0.97?'🌑':ph<0.25?'🌒':ph<0.27?'🌓':ph<0.47?'🌔':ph<0.53?'🌕':ph<0.75?'🌖':ph<0.77?'🌗':'🌘';
+      $('weather').innerHTML=`${icon} ${t}°C • 💨${w}km/h • 🌪️${p}hPa • 🌅 ${sr}–${ss} • ${moon} ${Math.round(ph*100)}%`;
+    }).catch(()=>{$('weather').textContent='Weather unavailable.';});
+  })();
 
-(()=>{
-  const lat=53.1235, lon=18.0084, tz="Europe/Warsaw";
+  // toggle info
+  $('d').onclick=()=>{const c=$('content');c.style.display=c.style.display==='none'?'block':'none'};
 
-  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=pressure_msl&daily=sunrise,sunset&timezone=${encodeURIComponent(tz)}`)
-  .then(r=>r.json())
-  .then(d=>{
-    const cw=d.current_weather||{},
-          t=cw.temperature??"—",
-          w=cw.windspeed??"—",
-          c=cw.weathercode??0,
-          icon=c<3?'☀️':c<50?'☁️':c<60?'🌧️':'☔️',
-          prs=d.hourly.pressure_msl||[],
-          times=d.hourly.time||[],
-          now=new Date();
-    let nearest=0,minDiff=1e9;
-    for(let i=0;i<times.length;i++){
-      const diff=Math.abs(new Date(times[i])-now);
-      if(diff<minDiff){minDiff=diff;nearest=i;}
+  // On this day
+  j(`https://api.wikimedia.org/feed/v1/wikipedia/en/onthisday/all/${MM}/${DD}`).then(d=>{
+    const ev=(d?.events||[]).sort((a,b)=>a.year-b.year).slice(0,5);
+    const html=ev.map(x=>`<b>${x.year}</b>: <a target="_blank" href="https://en.wikipedia.org/wiki/${encodeURIComponent(x.pages?.[0]?.titles?.normalized||'')}" style="font-weight:400">${(x.text||'').split(' – ')[0]}</a>`).join(' • ');
+    set('otd',`<h2>On this day</h2>${html||'<span class="mut">none</span>'}`);
+  });
+
+  // Movies (TMDb)
+  const tmdbKey='179d23dc4b4a1ba27263fcc2503d5e3d';
+  (async ()=>{
+    const d=await j(`https://api.themoviedb.org/3/discover/movie?api_key=${tmdbKey}&language=en-US&region=US&with_release_type=3|2&primary_release_date.gte=${ymd}&primary_release_date.lte=${ymd}&sort_by=popularity.desc`);
+    if(!d?.results?.length){ set('mv','<h2>Movies</h2><span class="mut">none</span>'); return; }
+    const movies=d.results.filter(x=>['en','pl'].includes(x.original_language)).slice(0,8);
+    const infos=[];
+    for(const m of movies){
+      const det=await j(`https://api.themoviedb.org/3/movie/${m.id}?api_key=${tmdbKey}&append_to_response=credits`);
+      if(!det) continue;
+      const g=det.genres?.[0]?.name||'', dir=det.credits?.crew?.find(c=>c.job==='Director')?.name||'';
+      const cast=(det.credits?.cast||[]).slice(0,3).map(c=>c.name).join(', ');
+      infos.push(`<a target="_blank" href="https://www.themoviedb.org/movie/${m.id}"><b>${m.title}</b></a>${g?' '+g:''}${dir?' by '+dir:''}${cast?`, <i>${cast}</i>`:''}`);
     }
-    const p=prs[nearest]?Math.round(prs[nearest]):"—",
-          sr=(d.daily.sunrise||["–"])[0].split("T")[1]?.slice(0,5)||"–",
-          ss=(d.daily.sunset||["–"])[0].split("T")[1]?.slice(0,5)||"–",
-          lp=2551443, newMoon=592500,
-          ph=(((now/1000)-newMoon)%lp)/lp<0?(((now/1000)-newMoon)%lp)/lp+1:(((now/1000)-newMoon)%lp)/lp,
-          moon=ph<0.03||ph>0.97?"🌑":ph<0.25?"🌒":ph<0.27?"🌓":ph<0.47?"🌔":ph<0.53?"🌕":ph<0.75?"🌖":ph<0.77?"🌗":"🌘",
-          percent=Math.round(ph*100);
+    set('mv',`<h2>Movies</h2>${infos.length?infos.join(' • '):'<span class="mut">none</span>'}`);
+  })();
 
-    document.getElementById("weather").innerHTML=
-      `${icon} ${t}°C • 💨${w}km/h • 🌪️${p}hPa • 🌅 ${sr}–${ss} • ${moon} ${percent}%`;
-  })
-  .catch(_=>{
-    document.getElementById("weather").textContent="Weather unavailable.";
+  // Albums (MusicBrainz)
+  j(`https://musicbrainz.org/ws/2/release/?query=date:${ymd}%20AND%20status:official&fmt=json&limit=15`).then(d=>{
+    const seen=new Set();
+    const releases=(d?.releases||[]).filter(x=>{const t=x['release-group']?.title||x.title; if(seen.has(t)) return false; seen.add(t); return true;});
+    const html=bullets(releases,10,x=>{
+      const t=x['release-group']?.title||x.title, id=x['release-group']?.id||x.id;
+      const artists=(x['artist-credit']||[]).map(a=>a.name).join(', ');
+      return `<a target="_blank" href="https://musicbrainz.org/release-group/${id}"><b>${t}</b></a>${artists?' '+artists:''}`;
+    });
+    set('al',`<h2>Albums</h2>${html}`);
+  });
+
+  // Matches (Scorebat)
+  j('https://www.scorebat.com/video-api/v3/').then(d=>{
+    const m=d?.response||[];
+    const html=bullets(m,10,x=>`${x.title.replace(' vs ',' ⚽ ')} (${x.competition})`);
+    set('ft',`<h2>Matches</h2>${html}`);
   });
 })();
-  
-// utility
-const j=async(u,o)=>{try{const r=await fetch(u,o);if(!r.ok)throw 0;return await r.json()}catch(e){return null}}
-const bullets=(arr,max=8,map=x=>x)=>arr&&arr.length?arr.slice(0,max).map(map).join(" • "):"<span class='mut'>none</span>";
 
-// 🔹 On this day (sorted oldest→newest, top 5, year bolded)
-j(`https://api.wikimedia.org/feed/v1/wikipedia/en/onthisday/all/${MM}/${DD}`).then(d=>{
- let ev=(d&&d.events)?d.events.sort((a,b)=>a.year-b.year).slice(0,5):[];
- const html=ev.map(x=>{
-  const yr=`<b>${x.year}</b>`;
-  const txt=x.text.split(" – ")[0]||"";
-  const link=(x.pages?.[0]?.titles?.normalized)||"";
-  return `${yr}: <a href="https://en.wikipedia.org/wiki/${encodeURIComponent(link)}" target="_blank" style="font-weight:400">${txt}</a>`;
-  }).join(" • ");
- set("otd",`<h2 style="display:inline; margin-right:6px;">On this day</h2>${html||"<span class='mut'>none</span>"}`);
-});
-
-// 🔹 Movies (bold + extended)
-(async()=>{
- if(!tmdbKey){set("mv","<h2>Movies</h2><span class='mut'>add TMDb key</span>");return;}
- const d=await j(`https://api.themoviedb.org/3/discover/movie?api_key=${tmdbKey}&language=en-US&region=US&with_release_type=3|2&primary_release_date.gte=${ymd}&primary_release_date.lte=${ymd}&sort_by=popularity.desc`);
- if(!d||!d.results){set("mv","<h2>Movies</h2><span class='mut'>none</span>");return;}
- const movies=d.results.filter(x=>["en","pl"].includes(x.original_language)).slice(0,8);
- const infos=[];
- for(const m of movies){
-   const det=await j(`https://api.themoviedb.org/3/movie/${m.id}?api_key=${tmdbKey}&append_to_response=credits`);
-   if(!det)continue;
-   const genres=(det.genres||[]).map(g=>g.name).join(", ");
-   const dir=(det.credits.crew.find(c=>c.job=="Director")||{}).name||"";
-   const cast=(det.credits.cast||[]).slice(0,3).map(c=>c.name).join(", ");
-   infos.push(
-  `<a href="https://www.themoviedb.org/movie/${m.id}" target="_blank"><b>${m.title}</b></a>` + (genres ? " " + genres.split(", ")[0] : "") + (dir ? " by " + dir : "") + (cast ? `, <i>${cast}</i>` : ""));
- }
- set("mv",`<h2 style="display:inline; margin-right:6px;">Movies</h2>${infos.length?infos.join(" • "):"<span class='mut'>none</span>"}`);
-})();
-
-// 🔹 Albums (bold + artists)
-j(`https://musicbrainz.org/ws/2/release/?query=date:${ymd}%20AND%20status:official&fmt=json&limit=15`).then(d=>{
- const seen=new Set,releases=(d&&d.releases||[]).filter(x=>{
-   const lang=(x["text-representation"]?.language)||"";
-   if(lang && !["eng","pol"].includes(lang))return false;
-   const t=(x["release-group"]?.title)||x.title;
-   if(seen.has(t))return false; seen.add(t); return t;
-});
- const html=bullets(releases,10,x=>{
-   const t=(x["release-group"]?.title)||x.title;
-   const id=(x["release-group"]?.id)||x.id;
-   const artists=(x["artist-credit"]||[]).map(a=>a.name).join(", ");
-   return `<a href="https://musicbrainz.org/release-group/${id}" target="_blank"><b>${t}</b></a>${artists?" "+artists:""}`;
- });
- set("al",`<h2 style="display:inline; margin-right:6px;">Albums</h2>${html}`);
-});
-
-// 🔹 Matches (Scorebat – free, no key)
-j("https://www.scorebat.com/video-api/v3/").then(d=>{
-  const m=d.response||[];
-  const html=m.slice(0,10).map(x=>`${x.title.replace(' vs ',' ⚽ ')} (${x.competition})`).join(" • ");
-  set("ft",`<h2 style="display:inline; margin-right:6px;">Matches</h2>${html||"<span class='mut'>none</span>"}`);
-});
-
-$("d").onclick=()=>{
-  const c=$("content");
-  c.style.display=c.style.display==="none"?"block":"none";
-};
-
-})();
-
-// --- Tiny pressure/precip chart (left of header) ---
+/* ---------- tiny uPlot chart (pressure/precip) ---------- */
 setTimeout(async()=>{
-  const c=document.getElementById("c");if(!c)return;
-  const lat=53.2220,lon=18.0544;
-  const q=new URLSearchParams({latitude:lat,longitude:lon,hourly:"pressure_msl,precipitation",past_days:"7",forecast_days:"7",timezone:"auto"});
-  const r=await fetch("https://api.open-meteo.com/v1/forecast?"+q);
-  if(!r.ok){c.textContent="err";return;}
-  const j=await r.json(),t=j.hourly.time||[],P=j.hourly.pressure_msl||[],R=j.hourly.precipitation||[];
-  if(!t.length){c.textContent="nodata";return;}
-  const x=t.map(e=>new Date(e).getTime()),yP=P.map(Number),yR=R.map(Number),now=Date.now();
-  const vL=x.filter(e=>new Date(e).getHours()==0);
-  const dayLines={hooks:{draw:u=>{const ctx=u.ctx,{top,height,left,width}=u.bbox;
-    ctx.save();ctx.strokeStyle="#777";ctx.lineWidth=.8;ctx.setLineDash([2,2]);
-    vL.forEach(ts=>{const X=u.valToPos(ts,"x",1);if(X>left&&X<left+width){ctx.beginPath();ctx.moveTo(X,top);ctx.lineTo(X,top+height);ctx.stroke();}});
+  const c=$('c'); if(!c) return;
+  const lat=53.2220, lon=18.0544;
+  const q=new URLSearchParams({latitude:lat,longitude:lon,hourly:'pressure_msl,precipitation',past_days:'7',forecast_days:'7',timezone:'auto'});
+  const r=await fetch('https://api.open-meteo.com/v1/forecast?'+q);
+  if(!r.ok){c.textContent='err';return;}
+  const data=await r.json();
+  const t=data.hourly?.time||[], P=data.hourly?.pressure_msl?.map(Number)||[], R=data.hourly?.precipitation?.map(Number)||[];
+  if(!t.length){c.textContent='nodata';return;}
+  const x=t.map(e=>new Date(e).getTime()), now=Date.now();
+  const rMax=Math.max(1,...R.filter(v=>v!=null));
+  // vertical daily lines at 00:00
+  const midnights=x.filter(ts=>(new Date(ts)).getHours()==0);
+  const dayLines={hooks:{draw:u=>{const {ctx}=u,{top,height,left,width}=u.bbox;ctx.save();ctx.strokeStyle='#777';ctx.lineWidth=.8;ctx.setLineDash([2,2]);
+    midnights.forEach(ts=>{const X=u.valToPos(ts,'x',1); if(X>left&&X<left+width){ctx.beginPath();ctx.moveTo(X,top);ctx.lineTo(X,top+height);ctx.stroke();}});
     ctx.restore();}}};
-  const nowLine={hooks:{draw:u=>{const X=u.valToPos(now,"x",1),ctx=u.ctx,{top,height,left,width}=u.bbox;
-    if(X<left||X>left+width)return;ctx.save();ctx.strokeStyle="#e74c3c";ctx.setLineDash([3,3]);
-    ctx.beginPath();ctx.moveTo(X,top);ctx.lineTo(X,top+height);ctx.stroke();ctx.restore();}}};
-  const ref=(lv,c="#008000")=>({hooks:{draw:u=>{const ctx=u.ctx,{top,height,left,width}=u.bbox;
-    ctx.save();ctx.strokeStyle=c;ctx.setLineDash([4,3]);
-    lv.forEach(v=>{const Y=u.valToPos(v,"p",1);if(Y>top&&Y<top+height){ctx.beginPath();ctx.moveTo(left,Y);ctx.lineTo(left+width,Y);ctx.stroke();}});
+  // now line
+  const nowLine={hooks:{draw:u=>{const X=u.valToPos(now,'x',1),{ctx}=u,{top,height,left,width}=u.bbox;if(X<left||X>left+width)return;
+    ctx.save();ctx.strokeStyle='#e74c3c';ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(X,top);ctx.lineTo(X,top+height);ctx.stroke();ctx.restore();}}};
+  // horizontal refs: 1013 (green) + 1000/1026 faint red
+  const ref=(vals,col)=>({hooks:{draw:u=>{const {ctx}=u,{top,height,left,width}=u.bbox;ctx.save();ctx.strokeStyle=col;ctx.setLineDash([4,3]);
+    vals.forEach(v=>{const Y=u.valToPos(v,'p',1); if(Y>top&&Y<top+height){ctx.beginPath();ctx.moveTo(left,Y);ctx.lineTo(left+width,Y);ctx.stroke();}});
     ctx.restore();}}});
-  const rMax=Math.max(1,...yR.filter(v=>v!=null));
-  new uPlot({
+  const u=new uPlot({
     width:c.clientWidth,height:c.clientHeight,
     scales:{x:{time:1},p:{auto:1},r:{range:[0,rMax]}},
-    legend:{show:0},
+    legend:{show:false},
     axes:[
-      {show:1,size:20,space:36,splits:(u,v)=>v.filter((_,i)=>i%(Math.ceil(v.length/4)||1)==0),
-       values:(u,v)=>v.map(e=>{const d=new Date(e);return`${d.getDate()}-${String(d.getHours()).padStart(2,"0")}`;}),
-       font:"9px system-ui"},
-      {show:1,scale:"p",size:6,values:()=>[],ticks:{show:0},grid:{show:1,stroke:"rgba(0,0,0,0.06)"}},
-      {show:1,scale:"r",side:1,size:6,values:()=>[],ticks:{show:0},grid:{show:0}}
+      {show:true,size:18,values:(u,v)=>v.map(e=>{const d=new Date(e);return `${d.getDate()}-${String(d.getHours()).padStart(2,'0')}`;}),font:'9px system-ui'},
+      {show:true,scale:'p',size:6,values:()=>[],ticks:{show:0},grid:{show:1,stroke:'rgba(0,0,0,.06)'}},
+      {show:true,scale:'r',side:1,size:6,values:()=>[],ticks:{show:0},grid:{show:0}}
     ],
-    series:[{}, {scale:"p",stroke:"#ff8800",width:1,fill:"rgba(255,136,0,0.1)",points:{show:0}},
-                {scale:"r",stroke:"#2b6cb0",width:1,points:{show:0}}],
-    plugins:[nowLine,ref([1013]),dayLines]
-  },[x,yP,yR],c);
+    series:[
+      {}, // x
+      {scale:'p',stroke:'#ff8800',width:1,points:{show:0},fill:'rgba(255,136,0,.10)'}, // pressure in orange (as you asked earlier)
+      {scale:'r',stroke:'#2b6cb0',width:1,points:{show:0}} // precipitation
+    ],
+    plugins:[nowLine,ref([1013],'#008000'),ref([1000,1026],'#d66'),dayLines],
+  },[x,P,R],c);
+  new ResizeObserver(es=>{for(const r of es) u.setSize({width:r.contentRect.width,height:r.contentRect.height})}).observe(c);
 },300);
-
-</script></body></html>
+</script>
+</body></html>
