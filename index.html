@@ -23,12 +23,18 @@ button.loadmore{width:100%;padding:6px;border:0;background:#eee;cursor:pointer}
 #d::after{content:"";display:block;clear:both}
 #c {border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.15);background:#fff;}
 </style></head><body>
-<div class="sticky-header"><div class="sites" id="siteIcons"></div>
-<div id="searchLine" style="position:relative;display:flex;align-items:center;justify-content:center;margin:8px auto 12px auto;max-width:400px;width:100%">
-<input type="search" id="titleSearch" placeholder="Search Titles..." style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;font-size:14px;box-sizing:border-box">
-<div id="scrollButtons" style="position:absolute;right:4px;display:flex;gap:8px;user-select:none;font-size:20px;cursor:pointer">
-<div id="pageDownArrow" title="Scroll one page down">⬇️</div>
-<div id="topArrow" title="Scroll to top">⏫</div></div></div></div>
+
+<div class="sticky-header" style="display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;">
+  <div id="c" style="width:180px;height:85px;flex-shrink:0;"></div>
+  <div class="sites" id="siteIcons"></div>
+  <div id="searchLine" style="position:relative;display:flex;align-items:center;justify-content:center;max-width:400px;width:100%">
+    <input type="search" id="titleSearch" placeholder="Search Titles..." style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;font-size:14px;box-sizing:border-box">
+    <div id="scrollButtons" style="position:absolute;right:4px;display:flex;gap:8px;user-select:none;font-size:20px;cursor:pointer">
+      <div id="pageDownArrow" title="Scroll one page down">⬇️</div>
+      <div id="topArrow" title="Scroll to top">⏫</div>
+    </div>
+  </div>
+</div>
 
 <div id="datebar">
   <div id="d"></div>
@@ -128,14 +134,9 @@ function getNamesday(){
   return (namesdayArray[m]&&namesdayArray[m][day])?namesdayArray[m][day]:"";
 }
   
-$("d").innerHTML=`
-  <div id="datewrap" style="display:flex;align-items:center;justify-content:center;gap:12px;">
-    <div id="c" style="width:180px;height:85px;flex-shrink:0;"></div>
-    <div style="text-align:center;">
-      <b>📅 ${ymd} (${today.toLocaleDateString('pl-PL',{weekday:'long'})}) — 🕊️ ${getNamesday()||"<span class='mut'>none</span>"} </b>
-      <div id="weather" style="margin-top:4px;font-weight:400;font-size:13px;color:#000"></div>
-    </div>
-  </div>
+$$("d").innerHTML=`
+  <b>↕️ 📅 ${ymd} (${today.toLocaleDateString('pl-PL',{weekday:'long'})}) — 🕊️ ${getNamesday()||"<span class='mut'>none</span>"} ↕️</b>
+  <div id="weather" style="margin-top:4px;font-weight:400;font-size:13px;color:#000"></div>
 `;
 
 (()=>{
