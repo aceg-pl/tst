@@ -2,43 +2,68 @@
 <html>
 <body>
 
-<h2>Fixtures test</h2>
+<h2>⚽ Top Teams – Upcoming Fixtures</h2>
 <div id="fx"></div>
 
 <script>
-console.log("SCRIPT LOADED");
-
 (async()=>{
-const KEY="f1637751ac2e41dc8cfbe1f9492c0a4b",H={"x-apisports-key":KEY};
+const KEY="f1637751ac2e41dc8cfbe1f9492c0a4b";
+const H={"x-apisports-key":KEY};
 const box=document.getElementById("fx");
 
+/* Top teams per league (names, human-readable) */
 const TOP={
   39:["Manchester City","Arsenal","Liverpool","Manchester United","Chelsea"],
   140:["Real Madrid","Barcelona","Atletico Madrid","Sevilla","Valencia"],
   135:["Inter","Milan","Juventus","Napoli","Roma"],
-  78:["Bayern Munich","Borussia Dortmund","RB Leipzig"],
+  78:["Bayern","Dortmund","Leipzig"],
   61:["Paris Saint-Germain","Marseille","Lyon"],
-  106:["Legia Warszawa","Lech Poznań","Raków"]
+  106:["Legia","Lech","Rakow"]
 };
 
-for(const [league,teams] of Object.entries(TOP)){
+/* Normalization to survive accents + suffixes */
+const norm=s=>s
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g,"")
+  .toLowerCase();
+
+const isTop=(name,list)=>list.some(t=>norm(name).includes(norm(t)));
+
+for(const league in TOP){
+  /* Always show league header */
+  let html=`<div style="margin:10px 0;padding:8px;border:1px solid #ddd;border-radius:8px">
+              <h3>League ${league}</h3>`;
+
   const r=await fetch(
-    `https://v3.football.api-sports.io/fixtures?league=${league}&next=100`,
+    `https://v3.football.api-sports.io/fixtures?league=${league}&season=2025`,
     {headers:H}
-  ).then(r=>r.json()).catch(()=>0);
+  ).then(r=>r.json()).catch(()=>null);
 
-  if(!r?.response?.length)continue;
+  if(!r?.response?.length){
+    html+=`<div style="opacity:.6">No fixtures available</div></div>`;
+    box.insertAdjacentHTML("beforeend",html);
+    continue;
+  }
 
-  let html=`<div class="fx-league"><h3>League ${league}</h3>`;
+  let found=0;
+  r.response.forEach(f=>{
+    if(
+      isTop(f.teams.home.name,TOP[league]) ||
+      isTop(f.teams.away.name,TOP[league])
+    ){
+      found++;
+      html+=`<div style="font-size:13px;line-height:1.4">
+        <span style="color:#666;font-size:12px">
+          ${f.fixture.date.slice(0,16).replace("T"," ")}
+        </span><br>
+        ${f.teams.home.name} – ${f.teams.away.name}
+      </div>`;
+    }
+  });
 
-  r.response
-   .filter(f=>teams.includes(f.teams.home.name)||teams.includes(f.teams.away.name))
-   .forEach(f=>{
-     html+=`<div class="fx-game">
-       <span class="fx-date">${f.fixture.date.slice(0,16).replace("T"," ")}</span><br>
-       ${f.teams.home.name} – ${f.teams.away.name}
-     </div>`;
-   });
+  if(!found){
+    html+=`<div style="opacity:.6">No top-team fixtures found</div>`;
+  }
 
   html+="</div>";
   box.insertAdjacentHTML("beforeend",html);
