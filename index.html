@@ -1,4 +1,36 @@
-<iframe
-  src="https://embed.windy.com/embed2.html?lat=52&lon=19&zoom=5&level=surface&overlay=satellite&menu=&message=&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=52&detailLon=19"
-  style="width:180px;height:85px;border:0;border-radius:6px;overflow:hidden;">
-</iframe>
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Fixtures test</h2>
+<div id="fx"></div>
+
+<script>
+console.log("SCRIPT LOADED");
+
+(async()=>{
+  console.log("IIFE ENTERED");
+
+  const box=document.getElementById("fx");
+  box.innerHTML="Running…";
+
+  const KEY="f1637751ac2e41dc8cfbe1f9492c0a4b";
+  const H={"x-apisports-key":KEY};
+
+  const r=await fetch(
+    "https://v3.football.api-sports.io/standings?league=39&season=2025",
+    {headers:H}
+  );
+
+  const j=await r.json();
+  console.log("STANDINGS RESPONSE",j);
+
+  box.innerHTML =
+    j.response?.[0]?.league?.standings?.[0]
+      ? "Standings OK"
+      : "Standings EMPTY";
+})();
+</script>
+
+</body>
+</html>
