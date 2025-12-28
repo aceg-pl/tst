@@ -11,7 +11,6 @@ const KEY="f1637751ac2e41dc8cfbe1f9492c0a4b";
 const H={"x-apisports-key":KEY};
 const box=document.getElementById("fx");
 
-/* Top teams per league (names, human-readable) */
 const TOP={
   39:["Manchester City","Arsenal","Liverpool","Manchester United","Chelsea"],
   140:["Real Madrid","Barcelona","Atletico Madrid","Sevilla","Valencia"],
@@ -21,38 +20,27 @@ const TOP={
   106:["Legia","Lech","Rakow"]
 };
 
-/* Normalization to survive accents + suffixes */
-const norm=s=>s
-  .normalize("NFD")
-  .replace(/[\u0300-\u036f]/g,"")
-  .toLowerCase();
+const norm=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+const isTop=(n,l)=>l.some(t=>norm(n).includes(norm(t)));
 
-const isTop=(name,list)=>list.some(t=>norm(name).includes(norm(t)));
+const today=new Date();
+const from=today.toISOString().slice(0,10);
+const to=new Date(today.getTime()+30*864e5).toISOString().slice(0,10);
 
 for(const league in TOP){
-  /* Always show league header */
   let html=`<div style="margin:10px 0;padding:8px;border:1px solid #ddd;border-radius:8px">
               <h3>League ${league}</h3>`;
 
   const r=await fetch(
-    `https://v3.football.api-sports.io/fixtures?league=${league}&season=2025`,
+    `https://v3.football.api-sports.io/fixtures?league=${league}&from=${from}&to=${to}`,
     {headers:H}
   ).then(r=>r.json()).catch(()=>null);
 
-  if(!r?.response?.length){
-    html+=`<div style="opacity:.6">No fixtures available</div></div>`;
-    box.insertAdjacentHTML("beforeend",html);
-    continue;
-  }
-
   let found=0;
-  r.response.forEach(f=>{
-    if(
-      isTop(f.teams.home.name,TOP[league]) ||
-      isTop(f.teams.away.name,TOP[league])
-    ){
+  r?.response?.forEach(f=>{
+    if(isTop(f.teams.home.name,TOP[league])||isTop(f.teams.away.name,TOP[league])){
       found++;
-      html+=`<div style="font-size:13px;line-height:1.4">
+      html+=`<div style="font-size:13px">
         <span style="color:#666;font-size:12px">
           ${f.fixture.date.slice(0,16).replace("T"," ")}
         </span><br>
@@ -61,15 +49,11 @@ for(const league in TOP){
     }
   });
 
-  if(!found){
-    html+=`<div style="opacity:.6">No top-team fixtures found</div>`;
-  }
-
+  if(!found) html+=`<div style="opacity:.6">No top-team matches in next 30 days</div>`;
   html+="</div>";
   box.insertAdjacentHTML("beforeend",html);
 }
 })();
 </script>
 
-</body>
-</html>
+</body></html>
