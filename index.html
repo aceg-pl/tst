@@ -5,29 +5,48 @@
 <style>
 body{font:14px system-ui;margin:20px}
 .item{margin-bottom:12px}
-.time{color:#666}
+.time{color:#666;font-size:12px}
+.err{color:#b00}
 </style>
 
 <div id="feed">Loading…</div>
 
 <script>
-fetch("https://api.allorigins.win/raw?url="+
- encodeURIComponent("https://www.open-epg.com/files/poland1.xml"))
-.then(r=>r.text())
-.then(t=>{
- let d=new DOMParser().parseFromString(t,"text/xml"),
-     o="",today=new Date().toISOString().slice(0,10).replace(/-/g,"");
- [...d.getElementsByTagName("programme")].forEach(p=>{
-  let c=p.getAttribute("channel"),
-      s=p.getAttribute("start");
-  if(!c||!s||!/sport/i.test(c)||!s.startsWith(today))return;
-  let h=s.slice(8,10)+":"+s.slice(10,12),
-      t=p.getElementsByTagName("title")[0]?.textContent||"",
-      x=p.getElementsByTagName("desc")[0]?.textContent||"";
-  o+=`<div class=item><b>${t}</b>
-      <div class=time>${c} · ${h}</div>
-      <div>${x}</div></div>`;
- });
- document.getElementById("feed").innerHTML=o||"No sport today";
-});
+const SRC="https://www.open-epg.com/files/poland1.xml";
+const PROXIES=[
+ u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),
+ u=>"https://cors.isomorphic-git.org/"+u,
+ u=>"https://thingproxy.freeboard.io/fetch/"+u
+];
+
+const today=new Date().toISOString().slice(0,10).replace(/-/g,"");
+const feed=document.getElementById("feed");
+
+(function tryFetch(i){
+ if(i>=PROXIES.length){
+  feed.innerHTML='<div class=err>EPG source blocked (CORS)</div>';
+  return;
+ }
+ fetch(PROXIES[i](SRC))
+ .then(r=>{if(!r.ok)throw 0;return r.text()})
+ .then(t=>{
+  const d=new DOMParser().parseFromString(t,"text/xml");
+  let out="";
+  [...d.getElementsByTagName("programme")].forEach(p=>{
+   const c=p.getAttribute("channel"),
+         s=p.getAttribute("start");
+   if(!c||!s||!/sport/i.test(c)||!s.startsWith(today))return;
+   const h=s.slice(8,10)+":"+s.slice(10,12),
+         ti=p.querySelector("title")?.textContent||"",
+         de=p.querySelector("desc")?.textContent||"";
+   out+=`<div class=item>
+           <b>${ti}</b>
+           <div class=time>${c} · ${h}</div>
+           ${de?`<div>${de}</div>`:""}
+         </div>`;
+  });
+  feed.innerHTML=out||"No sport today";
+ })
+ .catch(()=>tryFetch(i+1));
+})(0);
 </script>
