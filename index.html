@@ -1,52 +1,97 @@
 <!doctype html>
-<meta charset="utf-8">
-<title>Sport TV Today</title>
-
-<style>
-body{font:14px system-ui;margin:20px}
-.item{margin-bottom:12px}
-.time{color:#666;font-size:12px}
-.err{color:#b00}
-</style>
-
-<div id="feed">Loading…</div>
-
-fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://www.open-epg.com/files/poland1.xml"))
-.then(r => r.text())
-.then(t => {
-    let d = new DOMParser().parseFromString(t, "text/xml"),
-        o = "",
-        now = new Date(),
-        // Format YYYYMMDD to match XMLTV start time format
-        todayStr = now.getFullYear() + 
-                   String(now.getMonth() + 1).padStart(2, '0') + 
-                   String(now.getDate()).padStart(2, '0');
-
-    let programs = [...d.getElementsByTagName("programme")];
-
-    programs.forEach(p => {
-        let channelId = p.getAttribute("channel") || "";
-        let start = p.getAttribute("start") || "";
-        let title = p.getElementsByTagName("title")[0]?.textContent || "";
-        let desc = p.getElementsByTagName("desc")[0]?.textContent || "";
-        let category = p.getElementsByTagName("category")[0]?.textContent || "";
-
-        // CHECK: 1. Is it today? 2. Is 'sport' mentioned in ID, Title, or Category?
-        let isSport = /sport/i.test(channelId) || /sport/i.test(category) || /sport/i.test(title);
-        
-        if (isSport && start.startsWith(todayStr)) {
-            let time = start.slice(8, 10) + ":" + start.slice(10, 12);
-            o += `<div class="item">
-                    <b>${title}</b>
-                    <div class="time">${channelId.replace('.pl', '')} · ${time}</div>
-                    <small>${desc.substring(0, 100)}${desc.length > 100 ? '...' : ''}</small>
-                  </div>`;
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sport TV Poland - Today</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.5;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 0 15px;
+            background-color: #f4f4f9;
         }
-    });
+        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        #feed { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .item { 
+            padding: 12px 0; 
+            border-bottom: 1px solid #eee; 
+        }
+        .item:last-child { border-bottom: none; }
+        .title { font-weight: bold; color: #000; display: block; margin-bottom: 2px; }
+        .meta { font-size: 0.85em; color: #666; font-weight: 600; text-transform: uppercase; }
+        .desc { font-size: 0.9em; color: #444; margin-top: 5px; }
+        .loading { color: #888; font-style: italic; }
+        .error { color: #d9534f; font-weight: bold; }
+    </style>
+</head>
+<body>
 
-    document.getElementById("feed").innerHTML = o || "No sport found for today.";
-})
-.catch(err => {
-    document.getElementById("feed").innerHTML = "Error loading feed.";
-    console.error(err);
-});
+    <h2>Today's Sports Broadcasts</h2>
+    <div id="feed" class="loading">Fetching latest EPG data...</div>
+
+    <script>
+        async function fetchSportEPG() {
+            const feedContainer = document.getElementById("feed");
+            const xmlUrl = "https://www.open-epg.com/files/poland1.xml";
+            const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(xmlUrl);
+
+            try {
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error("Network response was not ok");
+                
+                const text = await response.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(text, "text/xml");
+                
+                // Get today's date in YYYYMMDD format
+                const now = new Date();
+                const todayStr = now.getFullYear() + 
+                                 String(now.getMonth() + 1).padStart(2, '0') + 
+                                 String(now.getDate()).padStart(2, '0');
+
+                let htmlContent = "";
+                const programs = Array.from(xmlDoc.getElementsByTagName("programme"));
+
+                programs.forEach(p => {
+                    const start = p.getAttribute("start") || "";
+                    const channel = p.getAttribute("channel") || "";
+                    const title = p.getElementsByTagName("title")[0]?.textContent || "No Title";
+                    const desc = p.getElementsByTagName("desc")[0]?.textContent || "";
+                    const category = p.getElementsByTagName("category")[0]?.textContent || "";
+
+                    // Match if "sport" is in channel ID, Category, or Title
+                    const isSport = /sport/i.test(channel) || 
+                                    /sport/i.test(category) || 
+                                    /sport/i.test(title);
+
+                    // Only show items that start today
+                    if (isSport && start.startsWith(todayStr)) {
+                        // Extract HH:mm from 20260104103000 format
+                        const time = start.slice(8, 10) + ":" + start.slice(10, 12);
+                        const cleanChannel = channel.replace('.pl', '').replace('Extra', ' Extra');
+
+                        htmlContent += `
+                            <div class="item">
+                                <span class="meta">${cleanChannel} • ${time}</span>
+                                <span class="title">${title}</span>
+                                <div class="desc">${desc.length > 120 ? desc.substring(0, 120) + '...' : desc}</div>
+                            </div>`;
+                    }
+                });
+
+                feedContainer.classList.remove("loading");
+                feedContainer.innerHTML = htmlContent || "No sports programming found for today.";
+
+            } catch (error) {
+                feedContainer.innerHTML = `<div class="error">Failed to load feed. Please try again later.</div>`;
+                console.error("Error fetching EPG:", error);
+            }
+        }
+
+        fetchSportEPG();
+    </script>
+</body>
+</html>
