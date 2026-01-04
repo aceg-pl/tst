@@ -11,42 +11,42 @@ body{font:14px system-ui;margin:20px}
 
 <div id="feed">Loading…</div>
 
-<script>
-const SRC="https://www.open-epg.com/files/poland1.xml";
-const PROXIES=[
- u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),
- u=>"https://cors.isomorphic-git.org/"+u,
- u=>"https://thingproxy.freeboard.io/fetch/"+u
-];
+fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://www.open-epg.com/files/poland1.xml"))
+.then(r => r.text())
+.then(t => {
+    let d = new DOMParser().parseFromString(t, "text/xml"),
+        o = "",
+        now = new Date(),
+        // Format YYYYMMDD to match XMLTV start time format
+        todayStr = now.getFullYear() + 
+                   String(now.getMonth() + 1).padStart(2, '0') + 
+                   String(now.getDate()).padStart(2, '0');
 
-const today=new Date().toISOString().slice(0,10).replace(/-/g,"");
-const feed=document.getElementById("feed");
+    let programs = [...d.getElementsByTagName("programme")];
 
-(function tryFetch(i){
- if(i>=PROXIES.length){
-  feed.innerHTML='<div class=err>EPG source blocked (CORS)</div>';
-  return;
- }
- fetch(PROXIES[i](SRC))
- .then(r=>{if(!r.ok)throw 0;return r.text()})
- .then(t=>{
-  const d=new DOMParser().parseFromString(t,"text/xml");
-  let out="";
-  [...d.getElementsByTagName("programme")].forEach(p=>{
-   const c=p.getAttribute("channel"),
-         s=p.getAttribute("start");
-   if(!c||!s||!/sport/i.test(c)||!s.startsWith(today))return;
-   const h=s.slice(8,10)+":"+s.slice(10,12),
-         ti=p.querySelector("title")?.textContent||"",
-         de=p.querySelector("desc")?.textContent||"";
-   out+=`<div class=item>
-           <b>${ti}</b>
-           <div class=time>${c} · ${h}</div>
-           ${de?`<div>${de}</div>`:""}
-         </div>`;
-  });
-  feed.innerHTML=out||"No sport today";
- })
- .catch(()=>tryFetch(i+1));
-})(0);
-</script>
+    programs.forEach(p => {
+        let channelId = p.getAttribute("channel") || "";
+        let start = p.getAttribute("start") || "";
+        let title = p.getElementsByTagName("title")[0]?.textContent || "";
+        let desc = p.getElementsByTagName("desc")[0]?.textContent || "";
+        let category = p.getElementsByTagName("category")[0]?.textContent || "";
+
+        // CHECK: 1. Is it today? 2. Is 'sport' mentioned in ID, Title, or Category?
+        let isSport = /sport/i.test(channelId) || /sport/i.test(category) || /sport/i.test(title);
+        
+        if (isSport && start.startsWith(todayStr)) {
+            let time = start.slice(8, 10) + ":" + start.slice(10, 12);
+            o += `<div class="item">
+                    <b>${title}</b>
+                    <div class="time">${channelId.replace('.pl', '')} · ${time}</div>
+                    <small>${desc.substring(0, 100)}${desc.length > 100 ? '...' : ''}</small>
+                  </div>`;
+        }
+    });
+
+    document.getElementById("feed").innerHTML = o || "No sport found for today.";
+})
+.catch(err => {
+    document.getElementById("feed").innerHTML = "Error loading feed.";
+    console.error(err);
+});
